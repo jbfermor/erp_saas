@@ -6,6 +6,5 @@ FactoryBot.define do
     sequence(:database_name) { |n| "tenant_db_#{n}" }
     association :plan, factory: :saas_plan
     status { "active" }
-    metadata { { created_by: "system" } }
   end
 end
