@@ -7,7 +7,7 @@ RSpec.describe Saas::Account, type: :model do
     account = described_class.new(
       name: "Cuenta Demo",
       slug: "demo",
-      subdomain: "demo"
+      subdomain: "demo",
       database_name: "erp_demo",
       plan: plan
     )

@@ -106,3 +106,46 @@ rescue => e
 end
 
 puts "🎉 Seed de inicialización completado."
+
+puts "🌱 Cargando datos fijos del módulo Core..."
+
+# Entity types
+entity_types = [
+  { name: "Persona Física", code: "individual", system: true },
+  { name: "Persona Jurídica", code: "company", system: true }
+]
+Saas::EntityType.insert_all(entity_types) if Saas::EntityType.count.zero?
+
+# Document types
+document_types = [
+  { name: "DNI", code: "dni" },
+  { name: "NIE", code: "nie" },
+  { name: "Pasaporte", code: "pasaporte" },
+  { name: "CIF", code: "cif" }
+]
+Saas::DocumentType.insert_all(document_types) if Saas::DocumentType.count.zero?
+
+# Tax regimes
+tax_types = [
+  { name: "General", code: "general" },
+  { name: "Exento", code: "exento" },
+  { name: "Reducido", code: "reducido" },
+  { name: "No Residente", code: "no_residente" }
+]
+Saas::TaxType.insert_all(tax_regimes) if Saas::TaxType.count.zero?
+
+# Address types
+address_types = [
+  { name: "Principal", code: "principal" },
+  { name: "Facturación", code: "billing" },
+  { name: "Envío", code: "shipping" }
+]
+Saas::AddressType.insert_all(address_types) if Saas::AddressType.count.zero?
+
+puts "✅ Datos fijos de Core cargados correctamente."
+
+# Cargar todos los archivos del directorio db/seeds en orden alfabético
+Dir[Rails.root.join('db/seeds/**/*.rb')].sort.each do |file|
+  puts "📦 Ejecutando seed: #{File.basename(file)}"
+  load file
+end
