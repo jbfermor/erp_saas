@@ -1,6 +1,6 @@
 class CreateSaasPlans < ActiveRecord::Migration[7.2]
   def change
-    create_table :saas_plans do |t|
+    create_table :saas_plans, id: :uuid do |t|
       t.string :name, null: false
       t.string :key, null: false, index: { unique: true }
       t.text :description

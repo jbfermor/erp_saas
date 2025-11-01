@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_01_140026) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_01_173838) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -66,7 +66,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_140026) do
   create_table "core_companies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "slug", null: false
-    t.bigint "saas_account_id", null: false
+    t.uuid "saas_account_id", null: false
     t.string "created_by"
     t.string "updated_by"
     t.datetime "created_at", null: false
@@ -103,13 +103,42 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_140026) do
     t.index ["slug"], name: "index_core_personal_infos_on_slug", unique: true
   end
 
-  create_table "saas_accounts", force: :cascade do |t|
+  create_table "core_user_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.uuid "role_id", null: false
+    t.uuid "company_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_core_user_roles_on_company_id"
+    t.index ["role_id"], name: "index_core_user_roles_on_role_id"
+    t.index ["user_id", "role_id", "company_id"], name: "index_user_roles_unique", unique: true
+    t.index ["user_id"], name: "index_core_user_roles_on_user_id"
+  end
+
+  create_table "core_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "email", default: "", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.string "reset_password_token"
+    t.datetime "reset_password_sent_at"
+    t.datetime "remember_created_at"
+    t.uuid "company_id", null: false
+    t.uuid "entity_id"
+    t.string "slug"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_core_users_on_company_id"
+    t.index ["email"], name: "index_core_users_on_email", unique: true
+    t.index ["entity_id"], name: "index_core_users_on_entity_id"
+    t.index ["reset_password_token"], name: "index_core_users_on_reset_password_token", unique: true
+  end
+
+  create_table "saas_accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "slug", null: false
     t.string "subdomain", null: false
     t.string "database_name", null: false
     t.string "status", default: "active", null: false
-    t.bigint "plan_id", null: false
+    t.uuid "plan_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["plan_id"], name: "index_saas_accounts_on_plan_id"
@@ -160,7 +189,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_140026) do
     t.index ["slug"], name: "index_saas_entity_types_on_slug", unique: true
   end
 
-  create_table "saas_modules", force: :cascade do |t|
+  create_table "saas_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "key", null: false
     t.text "description"
@@ -170,9 +199,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_140026) do
     t.index ["key"], name: "index_saas_modules_on_key", unique: true
   end
 
-  create_table "saas_plan_modules", force: :cascade do |t|
-    t.bigint "plan_id", null: false
-    t.bigint "module_id", null: false
+  create_table "saas_plan_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "plan_id", null: false
+    t.uuid "module_id", null: false
     t.boolean "enabled", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -181,7 +210,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_140026) do
     t.index ["plan_id"], name: "index_saas_plan_modules_on_plan_id"
   end
 
-  create_table "saas_plans", force: :cascade do |t|
+  create_table "saas_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "key", null: false
     t.text "description"
@@ -191,9 +220,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_140026) do
     t.index ["key"], name: "index_saas_plans_on_key", unique: true
   end
 
-  create_table "saas_subscriptions", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.bigint "module_id", null: false
+  create_table "saas_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.uuid "account_id", null: false
+    t.string "status", default: "active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_saas_roles_on_account_id"
+    t.index ["name"], name: "index_saas_roles_on_name", unique: true
+    t.index ["slug"], name: "index_saas_roles_on_slug", unique: true
+  end
+
+  create_table "saas_subscriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "account_id", null: false
+    t.uuid "module_id", null: false
     t.datetime "started_at", null: false
     t.datetime "expires_at"
     t.string "status", default: "active", null: false
@@ -226,9 +268,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_140026) do
   add_foreign_key "core_entities", "saas_entity_types", column: "entity_type_id"
   add_foreign_key "core_personal_infos", "core_entities", column: "entity_id"
   add_foreign_key "core_personal_infos", "saas_document_types", column: "document_type_id"
+  add_foreign_key "core_user_roles", "core_companies", column: "company_id", on_delete: :cascade
+  add_foreign_key "core_user_roles", "core_users", column: "user_id", on_delete: :cascade
+  add_foreign_key "core_user_roles", "saas_roles", column: "role_id", on_delete: :cascade
+  add_foreign_key "core_users", "core_companies", column: "company_id", on_delete: :cascade
+  add_foreign_key "core_users", "core_entities", column: "entity_id"
   add_foreign_key "saas_accounts", "saas_plans", column: "plan_id"
   add_foreign_key "saas_plan_modules", "saas_modules", column: "module_id"
   add_foreign_key "saas_plan_modules", "saas_plans", column: "plan_id"
+  add_foreign_key "saas_roles", "saas_accounts", column: "account_id", on_delete: :cascade
   add_foreign_key "saas_subscriptions", "saas_accounts", column: "account_id"
   add_foreign_key "saas_subscriptions", "saas_modules", column: "module_id"
 end

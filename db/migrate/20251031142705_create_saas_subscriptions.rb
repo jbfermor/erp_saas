@@ -1,8 +1,8 @@
 class CreateSaasSubscriptions < ActiveRecord::Migration[7.2]
   def change
-    create_table :saas_subscriptions do |t|
-      t.references :account, null: false, foreign_key: { to_table: :saas_accounts }
-      t.references :module, null: false, foreign_key: { to_table: :saas_modules }
+    create_table :saas_subscriptions, id: :uuid do |t|
+      t.references :account, null: false, foreign_key: { to_table: :saas_accounts }, type: :uuid
+      t.references :module, null: false, foreign_key: { to_table: :saas_modules }, type: :uuid
       t.datetime :started_at, null: false
       t.datetime :expires_at
       t.string :status, null: false, default: "active"
