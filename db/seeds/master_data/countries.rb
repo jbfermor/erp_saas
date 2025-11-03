@@ -148,13 +148,15 @@ countries = [
   { name: "Vietnam", iso_code: "VN", phone_prefix: "+84" },
   { name: "Zambia", iso_code: "ZM", phone_prefix: "+260" },
   { name: "Zimbabue", iso_code: "ZW", phone_prefix: "+263" }
-]
+].sort_by { |c| c[:name] } # orden alfabético
 
-countries.sort_by { |c| c[:name] }.each do |attrs|
-  Saas::Country.find_or_create_by!(iso_code: attrs[:iso_code]) do |c|
-    c.name = attrs[:name]
-    c.phone_prefix = attrs[:phone_prefix]
-  end
+countries.each do |c|
+  country = MasterData::Country.find_or_initialize_by(iso_code: c[:iso_code])
+  country.name = c[:name]
+  country.phone_prefix = c[:phone_prefix]
+  country.slug = c[:name].parameterize
+  country.save!
 end
 
-puts "✅ Países cargados: #{Saas::Country.count}"
+
+puts "✅ Países cargados: #{MasterData::Country.count}"

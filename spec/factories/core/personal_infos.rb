@@ -6,7 +6,7 @@ FactoryBot.define do
     document_number { "12345678A" }
 
         # 🔹 Asociaciones correctas
-    association :document_type, factory: [:saas_document_type, :dni]
+    association :document_type, factory: [:master_data_document, :dni]
     association :entity, factory: :core_entity
   end
 end

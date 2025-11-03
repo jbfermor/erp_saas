@@ -2,8 +2,8 @@ require 'rails_helper'
 
 RSpec.describe Core::Entity, type: :model do
 
-  let(:entity_type_individual) { create(:saas_entity_type, name: "Individual") }
-  let(:entity_type_business) { create(:saas_entity_type, name: "Business") }
+  let(:entity_type_individual) { create(:master_data_entity_type, name: "Individual") }
+  let(:entity_type_business) { create(:master_data_entity_type, name: "Business") }
   let(:company) { create(:core_company) }
 
   it { is_expected.to have_one(:personal_info) }

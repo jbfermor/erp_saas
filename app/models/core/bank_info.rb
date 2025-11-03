@@ -5,8 +5,10 @@
 #  iban       :string
 #  swift      :string
 #
-class Core::BankInfo < ApplicationRecord
-  belongs_to :entity, class_name: "Core::Entity"
+module Core
+  class BankInfo < ApplicationRecord
+    belongs_to :entity, class_name: "Core::Entity"
 
-  validates :iban, :bank_name, presence: true, uniqueness: true
+    validates :iban, :bank_name, presence: true, uniqueness: true
+  end
 end

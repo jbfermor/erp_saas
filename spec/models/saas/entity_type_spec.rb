@@ -1,8 +1,8 @@
 # spec/models/saas/entity_type_spec.rb
 require "rails_helper"
 
-RSpec.describe Saas::EntityType, type: :model do
-  subject { create(:saas_entity_type) }
+RSpec.describe MasterData::EntityType, type: :model do
+  subject { create(:master_data_entity_type) }
 
   # Validaciones
   it { is_expected.to validate_presence_of(:name) }
@@ -14,7 +14,7 @@ RSpec.describe Saas::EntityType, type: :model do
   # Factory
   describe "Factory" do
     it "es válida" do
-      expect(build(:saas_entity_type)).to be_valid
+      expect(build(:master_data_entity_type)).to be_valid
     end
   end
 end

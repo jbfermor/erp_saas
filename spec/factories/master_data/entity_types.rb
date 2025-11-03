@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :saas_entity_type, class: "Saas::EntityType" do
+  factory :master_data_entity_type, class: "MasterData::EntityType" do
     sequence(:name) { |n| "Tipo de entidad #{n}" }
     sequence(:code) { |n| "entity_type_#{n}" }
     sequence(:slug) { |n| "entity-type-#{n}" }

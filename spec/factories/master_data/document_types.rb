@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :saas_document_type, class: "Saas::DocumentType" do
+  factory :master_data_document, class: "MasterData::DocumentType" do
     sequence(:name) { |n| "Tipo documento #{n}" }
     sequence(:code) { |n| "DOC#{n}" }
     sequence(:slug) { |n| "tipo-documento-#{n}" }

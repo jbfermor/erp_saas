@@ -1,6 +1,6 @@
-class CreateSaasDocumentTypes < ActiveRecord::Migration[8.0]
+class CreateMasterDataDocumentTypes < ActiveRecord::Migration[8.0]
   def change
-    create_table :saas_document_types , id: :uuid do |t|
+    create_table :master_data_document_types , id: :uuid do |t|
       t.string :name, null: false
       t.string :code, null: false, index: { unique: true }
       t.string :slug, null: false, index: { unique: true }

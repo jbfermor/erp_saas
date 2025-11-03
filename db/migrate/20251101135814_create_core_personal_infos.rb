@@ -2,7 +2,7 @@ class CreateCorePersonalInfos < ActiveRecord::Migration[8.0]
   def change
     create_table :core_personal_infos, id: :uuid do |t|
       t.references :entity, null: false, foreign_key: { to_table: :core_entities }, type: :uuid
-      t.references :document_type, foreign_key: { to_table: :saas_document_types }, type: :uuid
+      t.references :document_type, foreign_key: { to_table: :master_data_documents }, type: :uuid
       t.string :first_name
       t.string :last_name
       t.string :document_number

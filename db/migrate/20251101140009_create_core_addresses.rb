@@ -2,8 +2,8 @@ class CreateCoreAddresses < ActiveRecord::Migration[8.0]
   def change
     create_table :core_addresses, id: :uuid do |t|
       t.references :addressable, polymorphic: true, null: false
-      t.references :address_type, null: false, foreign_key: { to_table: :saas_address_types }, type: :uuid
-      t.references :country, null: false, foreign_key: { to_table: :saas_countries }, type: :uuid
+      t.references :address_type, null: false, foreign_key: { to_table: :master_data_address_types }, type: :uuid
+      t.references :country, null: false, foreign_key: { to_table: :master_data_countries }, type: :uuid
       t.string :street
       t.string :city
       t.string :postal_code

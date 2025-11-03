@@ -1,26 +1,27 @@
-# db/seeds.rb
 # =========================================================
 # 🚀 SEED DE INICIALIZACIÓN DEL ERP SAAS
 # =========================================================
-# Crea:
-#  1. Módulos base en castellano
-#  2. Plan global para la cuenta madre
-#  3. Cuenta madre (tenant principal)
-#  4. Usuario propietario del SaaS (saas_owner)
+# Este seed:
+#  1. Carga los módulos base del SaaS
+#  2. Crea el plan global para la cuenta madre
+#  3. Carga datos fijos (entidades, tipos de documento, etc.)
+#  4. Crea la cuenta madre (account principal)
+#  5. Lanza un Job en background que crea la base de datos
+#     del tenant, su company, y sus suscripciones
 # =========================================================
 
 puts "🧩 Cargando módulos base del SaaS..."
 
 base_modules = [
-  { key: "saas",       name: "Gestión del SaaS",       description: "Administración de tenants, planes y suscripciones" },
-  { key: "core",       name: "Núcleo",                 description: "Funciones base del sistema" },
-  { key: "billing",    name: "Facturación",            description: "Gestión de cobros, pagos y facturas" },
-  { key: "inventory",  name: "Inventario",             description: "Gestión de inventarios, existencias y movimientos" },
-  { key: "sales",      name: "Ventas",                 description: "Gestión de clientes, pedidos y albaranes de venta" },
-  { key: "purchases",  name: "Compras",                description: "Gestión de proveedores, pedidos y albaranes de compra" },
-  { key: "crm",        name: "CRM",                    description: "Gestión de relaciones con clientes" },
-  { key: "hr",         name: "Recursos Humanos",       description: "Gestión de personal, empleados y nóminas" },
-  { key: "analytics",  name: "Analítica",              description: "Reportes, estadísticas e indicadores del sistema" }
+  { key: "saas", name: "Gestión del SaaS", description: "Administración de tenants, planes y suscripciones" },
+  { key: "core", name: "Núcleo", description: "Funciones base del sistema" },
+  { key: "billing", name: "Facturación", description: "Gestión de cobros, pagos y facturas" },
+  { key: "inventory", name: "Inventario", description: "Gestión de existencias y movimientos" },
+  { key: "sales", name: "Ventas", description: "Gestión de clientes, pedidos y albaranes de venta" },
+  { key: "purchases", name: "Compras", description: "Gestión de proveedores y compras" },
+  { key: "crm", name: "CRM", description: "Relaciones con clientes" },
+  { key: "hr", name: "Recursos Humanos", description: "Empleados y nóminas" },
+  { key: "analytics", name: "Analítica", description: "Reportes e indicadores" }
 ]
 
 base_modules.each do |mod|
@@ -39,12 +40,11 @@ puts "✅ Módulos base cargados: #{Saas::Module.count}"
 
 puts "🌍 Creando o actualizando plan global..."
 
-global_plan = Saas::Plan.find_or_create_by!(code: "global") do |plan|
-  plan.name = "Plan Global"
+global_plan = Saas::Plan.find_or_create_by!(code: "saas") do |plan|
+  plan.name = "Core Saas Plan"
   plan.description = "Incluye todos los módulos disponibles del sistema"
 end
 
-# Asociar TODOS los módulos al plan global
 Saas::Module.find_each do |mod|
   global_plan.modules << mod unless global_plan.modules.exists?(mod.id)
 end
@@ -52,100 +52,51 @@ end
 puts "✅ Plan global actualizado con #{global_plan.modules.count} módulos."
 
 # =========================================================
-# 👑 USUARIO SAAS OWNER
+# 📦 CARGAR SEEDS SECUNDARIOS (países, roles, etc.)
 # =========================================================
 
-puts "👑 Creando usuario propietario del SaaS..."
-
-saas_owner_role = Saas::Role.find_or_create_by!(key: "saas_owner") do |r|
-  r.name = "Propietario del SaaS"
-  r.description = "Usuario con control total sobre el sistema, solo accesible desde la cuenta madre."
-end
-
-saas_owner_user = User.find_or_create_by!(email: "owner@saas.local") do |u|
-  u.name = "SaaS Owner"
-  u.password = "ChangeMe123!"
-  u.password_confirmation = "ChangeMe123!"
-  u.confirmed_at = Time.current if u.respond_to?(:confirmed_at)
-end
-
-puts "✅ Usuario SaaS Owner creado: #{saas_owner_user.email}"
-
-# =========================================================
-# 🏠 CUENTA MADRE DEL SISTEMA
-# =========================================================
-
-puts "🏠 Creando cuenta madre (tenant principal)..."
-
-mother_account = Saas::Account.find_or_create_by!(slug: "main") do |acc|
-  acc.name = "Cuenta Madre del SaaS"
-  acc.subdomain = "saas"
-  acc.database_name = "erp_saas_main"
-  acc.plan = global_plan
-  acc.owner = saas_owner_user
-  acc.status = "active"
-  acc.metadata = { system: true, created_by: "seed" }
-end
-
-puts "✅ Cuenta madre creada: #{mother_account.name} (plan: #{mother_account.plan.name}, owner: #{mother_account.owner.email})"
-
-# =========================================================
-# 🧱 PROVISIONADO DE BASE DE DATOS DEL TENANT MADRE
-# =========================================================
-
-begin
-  db_exists = ActiveRecord::Base.connection.execute("SELECT 1 FROM pg_database WHERE datname='#{mother_account.database_name}'").any?
-  unless db_exists
-    ActiveRecord::Base.connection.create_database(mother_account.database_name)
-    puts "📦 Base de datos creada para la cuenta madre: #{mother_account.database_name}"
-  else
-    puts "ℹ️ Base de datos ya existente: #{mother_account.database_name}"
-  end
-rescue => e
-  puts "⚠️ Error creando base de datos del tenant madre: #{e.message}"
-end
-
-puts "🎉 Seed de inicialización completado."
-
-puts "🌱 Cargando datos fijos del módulo Core..."
-
-# Entity types
-entity_types = [
-  { name: "Persona Física", code: "individual", system: true },
-  { name: "Persona Jurídica", code: "company", system: true }
-]
-Saas::EntityType.insert_all(entity_types) if Saas::EntityType.count.zero?
-
-# Document types
-document_types = [
-  { name: "DNI", code: "dni" },
-  { name: "NIE", code: "nie" },
-  { name: "Pasaporte", code: "pasaporte" },
-  { name: "CIF", code: "cif" }
-]
-Saas::DocumentType.insert_all(document_types) if Saas::DocumentType.count.zero?
-
-# Tax regimes
-tax_types = [
-  { name: "General", code: "general" },
-  { name: "Exento", code: "exento" },
-  { name: "Reducido", code: "reducido" },
-  { name: "No Residente", code: "no_residente" }
-]
-Saas::TaxType.insert_all(tax_regimes) if Saas::TaxType.count.zero?
-
-# Address types
-address_types = [
-  { name: "Principal", code: "principal" },
-  { name: "Facturación", code: "billing" },
-  { name: "Envío", code: "shipping" }
-]
-Saas::AddressType.insert_all(address_types) if Saas::AddressType.count.zero?
-
-puts "✅ Datos fijos de Core cargados correctamente."
-
-# Cargar todos los archivos del directorio db/seeds en orden alfabético
-Dir[Rails.root.join('db/seeds/**/*.rb')].sort.each do |file|
+Dir[Rails.root.join("db/seeds/**/*.rb")].sort.each do |file|
+  next if file.end_with?("seeds.rb") # evitar recursión
   puts "📦 Ejecutando seed: #{File.basename(file)}"
   load file
 end
+
+puts "✅ Seeds secundarios cargados correctamente."
+
+# =========================================================
+# 🏗 CREAR CUENTA MADRE (solo si no existe)
+# =========================================================
+
+puts "🏗 Creando cuenta madre y preparando tenant..."
+
+mother_account = Saas::Account.find_or_create_by!(slug: "saas-master") do |acc|
+  acc.name = "SaaS Master"
+  acc.subdomain = "master"
+  acc.database_name = "erp_saas_master"
+  acc.plan = global_plan
+end
+
+# Datos de conexión del tenant madre (solo desarrollo)
+tenant_db_params = {
+  host: ENV.fetch("PGHOST", "localhost"),
+  port: ENV.fetch("PGPORT", 5432),
+  username: ENV.fetch("PGUSER", "postgres"),
+  password: ENV.fetch("PGPASSWORD", "postgres"),
+  database_name: mother_account.database_name
+}
+
+mother_account.build_tenant_database(tenant_db_params)
+mother_account.save!
+
+# =========================================================
+# ⚙️ LANZAR JOB DE PROVISIONAMIENTO
+# =========================================================
+
+if Saas::TenantDatabase.exists?(account: mother_account)
+  puts "🕓 Encolando TenantProvisionerJob para la cuenta madre..."
+  Saas::TenantProvisionerJob.perform_later(mother_account.id)
+else
+  puts "⚠️ No se pudo crear TenantDatabase para la cuenta madre."
+end
+
+puts "✅ Seed de inicialización completado correctamente."

@@ -1,32 +1,28 @@
+# app/models/saas/account.rb
+require "pg"
+
 module Saas
   class Account < ApplicationRecord
-    belongs_to :plan, class_name: "Saas::Plan"
+    has_one :tenant_database, class_name: "Saas::TenantDatabase", dependent: :destroy
+
+    has_many :subscriptions, class_name: "Saas::Subscription", dependent: :destroy
+    has_many :modules, through: :subscriptions, class_name: "Saas::Module"
+
+    belongs_to :plan, class_name: "Saas::Plan", optional: true
+    has_one :company, class_name: "Core::Company", dependent: :destroy
 
     validates :name, :slug, :subdomain, :database_name, presence: true
-    validates :slug, :subdomain, :database_name, uniqueness: true
+    validates :slug, :subdomain, uniqueness: true
 
-    delegate :modules, to: :plan
+    # Parámetros temporales para la base de datos (llegan desde el front)
+    attr_accessor :tenant_database_params
 
-    scope :active, -> { where(status: "active") }
+    after_commit :enqueue_tenant_provisioner, on: :create
 
-    # Determina si esta es la cuenta madre del SaaS
-    def mother_account?
-      slug == "main" || subdomain == "saas"
-    end
+    private
 
-    # Helper para crear el tenant DB
-    def provision_database!
-      db_name = database_name
-      return if ActiveRecord::Base.connection.execute("SELECT datname FROM pg_database WHERE datname='#{db_name}'").any?
-
-      ActiveRecord::Base.connection.create_database(db_name)
-      puts "✅ Created tenant database: #{db_name}"
-    end
-
-    # Helper para eliminar la DB del tenant
-    def drop_database!
-      ActiveRecord::Base.connection.drop_database(database_name)
-      puts "🗑️ Dropped tenant database: #{database_name}"
+    def enqueue_tenant_provisioner
+      Saas::TenantProvisionerJob.perform_later(self.id)
     end
   end
 end
