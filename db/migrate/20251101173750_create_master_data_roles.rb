@@ -6,7 +6,6 @@ class CreateMasterDataRoles < ActiveRecord::Migration[7.2]
       t.text :description
       t.string :scope, null: false, index: true
       t.integer :position, null: false, default: 5
-      t.timestamps
 
       t.timestamps
     end

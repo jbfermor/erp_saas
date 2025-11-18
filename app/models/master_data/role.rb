@@ -3,8 +3,7 @@ module MasterData
   class Role < ApplicationRecord
     has_many :users, class_name: "Core::User"
 
-    validates :name, :slug, :code, :scope, :position, presence: true
-    validates :code, uniqueness: true
+    validates :name, :slug, :scope, :position, presence: true
     validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
     scope :saas_roles, -> { where(scope: "saas") }

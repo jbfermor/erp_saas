@@ -9,5 +9,12 @@ FactoryBot.define do
     end
     association :plan, factory: :saas_plan
     status { "active" }
+
+    trait :with_tenant_db do
+      after(:create) do |acc|
+        create(:saas_tenant_database, account: acc)
+      end
+    end
+    
   end
 end

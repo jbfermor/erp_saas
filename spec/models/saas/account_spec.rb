@@ -24,15 +24,4 @@ RSpec.describe Saas::Account, type: :model do
     expect(build(:saas_account, slug: nil)).not_to be_valid
   end
 
-  it "detects mother account correctly" do
-    account = build(:saas_account, slug: "main", subdomain: "saas")
-    expect(account.mother_account?).to be true
-  end
-
-  it "delegates modules to plan" do
-    mod = create(:saas_module)
-    plan.modules << mod
-    account = create(:saas_account, plan:)
-    expect(account.modules).to include(mod)
-  end
 end

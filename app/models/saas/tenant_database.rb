@@ -6,6 +6,8 @@ module Saas
     validates :database_name, :username, :password, :host, :port, presence: true
     validates :database_name, uniqueness: { scope: :host }
 
+    encrypts :password
+
     # Construye la URL de conexión para PostgreSQL
     def connection_url
       "postgresql://#{username}:#{password}@#{host}:#{port}/#{database_name}"

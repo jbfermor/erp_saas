@@ -1,28 +1,49 @@
-require 'rails_helper'
+require "rails_helper"
 
 RSpec.describe MasterData::Seeder, type: :service do
-  let!(:role1) { create(:master_data_role, code: "tenant_admin", scope: "tenant") }
-  let!(:role2) { create(:master_data_role, code: "saas_admin", scope: "saas") }
   let(:account) { create(:saas_account) }
+  let(:tenant_db) { create(:saas_tenant_database, account: account, database_name: "tenant_test_db") }
+
+  subject(:seeder) { described_class.new(account) }
 
   before do
-    # Mock TenantSwitcher.switch para ejecutar el block en-memory
-    allow(TenantSwitcher).to receive(:switch).with(account).and_wrap_original do |_m, &_block|
-      # Simular ejecución del bloque en "tenant DB" creando una tabla in-memory
-      # En test simplificamos: ejecutamos el block en la misma BD pero comprobamos que se llamen los métodos esperados
-      yield
+    account.update!(tenant_database: tenant_db)
+
+    # Simulamos que existen registros en la BD maestra
+    MasterData::Country.create!(name: "España", iso_code: "ES", phone_prefix: "+34")
+    MasterData::Role.create!(name: "Admin", position: 1, scope: "tenant", description: "Administrador general")
+
+    allow(seeder).to receive(:connection_url_for).and_return("postgres://postgres:postgres@localhost/tenant_test_db")
+    allow(ActiveRecord::Base).to receive(:connected_to).and_yield
+  end
+
+  describe "#seed!" do
+    it "replica todos los modelos master_data" do
+      expect(seeder).to receive(:replicate_model_to_tenant).with(MasterData::Country, anything)
+      expect(seeder).to receive(:replicate_model_to_tenant).with(MasterData::Role, anything)
+      seeder.seed!
+    end
+
+    it "lanza un error si la cuenta no tiene tenant_database" do
+      account.update!(tenant_database: nil)
+      expect { described_class.new(account).seed! }.to raise_error(ArgumentError)
     end
   end
 
-  it "replica solo roles con scope tenant" do
-    # Ensure source has both types
-    expect(MasterData::Role.where(scope: 'tenant').count).to be >= 1
-    # run seeder (will call mocked TenantSwitcher and perform upserts in same DB)
-    seeder = described_class.new(account, logger: Logger.new(nil))
-    expect { seeder.seed! }.not_to raise_error
+  describe "#replicate_model_to_tenant" do
+    let(:tenant_url) { "postgres://postgres:postgres@localhost/tenant_test_db" }
 
-    # After seeding (mock), the tenant DB would have the tenant role; here we assert no exception and that method executed.
-    # For an integration test you would create a real temporary DB and assert the records exist there.
-    expect(true).to be true
+    it "copia registros desde el modelo global al tenant" do
+      records = MasterData::Country.all
+      expect(records.count).to eq(1)
+
+      # Simulamos conexión al tenant
+      expect(ActiveRecord::Base).to receive(:connected_to).with(database: { writing: tenant_url }).and_yield
+
+      expect(MasterData::Country).to receive(:delete_all)
+      expect(MasterData::Country).to receive(:create!).at_least(:once)
+
+      seeder.send(:replicate_model_to_tenant, MasterData::Country, tenant_url)
+    end
   end
 end

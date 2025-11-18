@@ -1,102 +1,104 @@
 # =========================================================
 # 🚀 SEED DE INICIALIZACIÓN DEL ERP SAAS
 # =========================================================
-# Este seed:
-#  1. Carga los módulos base del SaaS
-#  2. Crea el plan global para la cuenta madre
-#  3. Carga datos fijos (entidades, tipos de documento, etc.)
-#  4. Crea la cuenta madre (account principal)
-#  5. Lanza un Job en background que crea la base de datos
-#     del tenant, su company, y sus suscripciones
-# =========================================================
 
-puts "🧩 Cargando módulos base del SaaS..."
+puts "=============================================="
+puts "🚀 INICIALIZANDO ERP SAAS"
+puts "=============================================="
 
-base_modules = [
-  { key: "saas", name: "Gestión del SaaS", description: "Administración de tenants, planes y suscripciones" },
-  { key: "core", name: "Núcleo", description: "Funciones base del sistema" },
-  { key: "billing", name: "Facturación", description: "Gestión de cobros, pagos y facturas" },
-  { key: "inventory", name: "Inventario", description: "Gestión de existencias y movimientos" },
-  { key: "sales", name: "Ventas", description: "Gestión de clientes, pedidos y albaranes de venta" },
-  { key: "purchases", name: "Compras", description: "Gestión de proveedores y compras" },
-  { key: "crm", name: "CRM", description: "Relaciones con clientes" },
-  { key: "hr", name: "Recursos Humanos", description: "Empleados y nóminas" },
-  { key: "analytics", name: "Analítica", description: "Reportes e indicadores" }
-]
+# ---------------------------------------------------------
+# 🔌 1️⃣ Conectarse manualmente a la base principal (erp_saas)
+# ---------------------------------------------------------
+puts "🔌 Conectando a base principal (erp_saas)..."
 
-base_modules.each do |mod|
-  Saas::Module.find_or_create_by!(key: mod[:key]) do |m|
-    m.name = mod[:name]
-    m.description = mod[:description]
-    m.active = true
+begin
+  # Establecemos la conexión principal
+  ActiveRecord::Base.establish_connection(:development)
+  puts "✅ Conexión establecida correctamente."
+
+  # Migrar usando la API soportada en Rails 8
+  require "active_record/tasks/database_tasks"
+
+  puts "⚙️ Comprobando y ejecutando migraciones (Rails 8)..."
+  puts "BD usada por AddressType: #{MasterData::AddressType.connection_db_config.database}"
+
+  ActiveRecord::Tasks::DatabaseTasks.env = Rails.env
+  ActiveRecord::Tasks::DatabaseTasks.db_dir = Rails.root.join("db")
+  ActiveRecord::Tasks::DatabaseTasks.migrations_paths = [Rails.root.join("db/migrate")]
+  ActiveRecord::Tasks::DatabaseTasks.database_configuration = Rails.configuration.database_configuration
+
+  ActiveRecord::Tasks::DatabaseTasks.migrate
+
+  # ---------------------------------------------------------
+  # 🌱 2️⃣ Cargar seeds secundarios (master_data)
+  # ---------------------------------------------------------
+  puts "🌱 Cargando seeds de master_data..."
+  master_data_path = Rails.root.join("db", "seeds", "master_data", "*.rb")
+
+  Dir[master_data_path].sort.each do |file|
+    seed_name = File.basename(file, ".rb")
+    puts "   → Ejecutando #{seed_name}..."
+    begin
+      load file
+    rescue => e
+      puts "   ❌ Error al cargar #{seed_name}: #{e.message}"
+    end
   end
+
+  puts "✅ Seeds de master_data cargados correctamente."
+
+rescue => e
+  puts "❌ Error al conectar o migrar la base principal: #{e.message}"
+  puts e.backtrace.first(10)
+  raise e
 end
 
-puts "✅ Módulos base cargados: #{Saas::Module.count}"
+# ---------------------------------------------------------
+# 🧩 3️⃣ Crear la cuenta madre (account principal)
+# ---------------------------------------------------------
+puts "🏗 Creando cuenta madre (SaaS Master)..."
 
-# =========================================================
-# 🧠 PLAN GLOBAL (para la cuenta madre)
-# =========================================================
+begin
+  global_plan = Saas::Plan.find_or_create_by!(key: "saas") do |plan|
+    plan.name = "Core SaaS Plan"
+    plan.description = "Incluye todos los módulos base del sistema"
+  end
 
-puts "🌍 Creando o actualizando plan global..."
+  base_modules = [
+    { key: "saas", name: "Gestión del SaaS", description: "Administración de tenants, planes y suscripciones" },
+    { key: "core", name: "Núcleo", description: "Funciones base del sistema" }
+  ]
 
-global_plan = Saas::Plan.find_or_create_by!(code: "saas") do |plan|
-  plan.name = "Core Saas Plan"
-  plan.description = "Incluye todos los módulos disponibles del sistema"
+  base_modules.each do |mod|
+    Saas::Module.find_or_create_by!(key: mod[:key]) do |m|
+      m.name = mod[:name]
+      m.description = mod[:description]
+      m.active = true
+    end
+  end
+
+  Saas::Module.find_each do |mod|
+    global_plan.modules << mod unless global_plan.modules.exists?(mod.id)
+  end
+
+  mother_account = Saas::Account.find_or_create_by!(slug: "master") do |acc|
+    acc.name = "SaaS Master"
+    acc.subdomain = "master"
+    acc.database_name = "master"
+    acc.plan = global_plan
+  end
+
+  puts "✅ Cuenta madre creada o existente: #{mother_account.name} (DB: #{mother_account.database_name})"
+rescue => e
+  puts "❌ Error creando la cuenta madre: #{e.message}"
+  raise e
 end
 
-Saas::Module.find_each do |mod|
-  global_plan.modules << mod unless global_plan.modules.exists?(mod.id)
-end
-
-puts "✅ Plan global actualizado con #{global_plan.modules.count} módulos."
-
-# =========================================================
-# 📦 CARGAR SEEDS SECUNDARIOS (países, roles, etc.)
-# =========================================================
-
-Dir[Rails.root.join("db/seeds/**/*.rb")].sort.each do |file|
-  next if file.end_with?("seeds.rb") # evitar recursión
-  puts "📦 Ejecutando seed: #{File.basename(file)}"
-  load file
-end
-
-puts "✅ Seeds secundarios cargados correctamente."
-
-# =========================================================
-# 🏗 CREAR CUENTA MADRE (solo si no existe)
-# =========================================================
-
-puts "🏗 Creando cuenta madre y preparando tenant..."
-
-mother_account = Saas::Account.find_or_create_by!(slug: "saas-master") do |acc|
-  acc.name = "SaaS Master"
-  acc.subdomain = "master"
-  acc.database_name = "erp_saas_master"
-  acc.plan = global_plan
-end
-
-# Datos de conexión del tenant madre (solo desarrollo)
-tenant_db_params = {
-  host: ENV.fetch("PGHOST", "localhost"),
-  port: ENV.fetch("PGPORT", 5432),
-  username: ENV.fetch("PGUSER", "postgres"),
-  password: ENV.fetch("PGPASSWORD", "postgres"),
-  database_name: mother_account.database_name
-}
-
-mother_account.build_tenant_database(tenant_db_params)
-mother_account.save!
-
-# =========================================================
-# ⚙️ LANZAR JOB DE PROVISIONAMIENTO
-# =========================================================
-
-if Saas::TenantDatabase.exists?(account: mother_account)
-  puts "🕓 Encolando TenantProvisionerJob para la cuenta madre..."
-  Saas::TenantProvisionerJob.perform_later(mother_account.id)
-else
-  puts "⚠️ No se pudo crear TenantDatabase para la cuenta madre."
-end
-
-puts "✅ Seed de inicialización completado correctamente."
+# ---------------------------------------------------------
+# 🏁 4️⃣ Resumen final
+# ---------------------------------------------------------
+puts "=============================================="
+puts "🎉 Seed completado correctamente"
+puts "   ▫ Base principal: erp_saas"
+puts "   ▫ Account madre: SaaS Master (DB: master)"
+puts "=============================================="

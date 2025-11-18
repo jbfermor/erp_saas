@@ -10,9 +10,9 @@ role_data = [
 ]
 
 role_data.each do |role_attrs|
-  Saas::Role.find_or_create_by!(slug: role_attrs[:slug]) do |role|
+  MasterData::Role.find_or_create_by!(slug: role_attrs[:slug]) do |role|
     role.name = role_attrs[:name]
   end
 end
 
-puts "Se han creado los roles: #{Saas::Role.pluck(:name).join(', ')}"
+puts "Se han creado los roles: #{MasterData::Role.pluck(:name).join(', ')}"
