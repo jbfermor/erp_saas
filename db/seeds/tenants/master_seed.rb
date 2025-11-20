@@ -6,6 +6,12 @@
 
 puts "🚀 Inicializando tenant master..."
 
+#  Ejecutar los seeds de master_data internos (roles, countries, etc)
+Dir[Rails.root.join("db/seeds/master_data/**/*.rb")].sort.each do |file|
+  puts "📦 Ejecutando master_data seed: #{File.basename(file)}"
+  load file
+end
+
 # 1️⃣ Crear la company principal
 company = Core::Company.find_or_create_by!(name: "SaaS Global") do |c|
   c.tax_id = "X0000000X"
@@ -34,10 +40,6 @@ owner_role = MasterData::Role.find_by!(name: "SaaS Owner")
 user.update!(role: owner_role)
 puts "🔐 Rol asignado: #{owner_role.name}"
 
-# 5️⃣ Ejecutar los seeds de master_data internos (roles, countries, etc)
-Dir[Rails.root.join("db/seeds/master_data/**/*.rb")].sort.each do |file|
-  puts "📦 Ejecutando master_data seed: #{File.basename(file)}"
-  load file
-end
+
 
 puts "✅ Tenant master inicializado correctamente."

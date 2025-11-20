@@ -118,19 +118,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_193833) do
     t.string "updated_by"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["saas_account_id"], name: "index_core_companies_on_saas_account_id"
     t.index ["slug"], name: "index_core_companies_on_slug", unique: true
   end
 
   create_table "core_entities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "slug", null: false
     t.uuid "entity_type_id", null: false
     t.uuid "company_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["company_id"], name: "index_core_entities_on_company_id"
     t.index ["entity_type_id"], name: "index_core_entities_on_entity_type_id"
-    t.index ["slug"], name: "index_core_entities_on_slug", unique: true
   end
 
   create_table "core_personal_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -258,7 +255,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_193833) do
     t.string "name", null: false
     t.string "slug", null: false
     t.string "subdomain", null: false
-    t.string "database_name", null: false
     t.string "status", default: "active", null: false
     t.uuid "plan_id", null: false
     t.datetime "created_at", null: false
@@ -321,7 +317,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_193833) do
   add_foreign_key "core_bank_infos", "core_entities", column: "entity_id"
   add_foreign_key "core_business_infos", "core_entities", column: "entity_id"
   add_foreign_key "core_business_infos", "master_data_tax_types", column: "tax_type_id"
-  add_foreign_key "core_companies", "saas_accounts"
   add_foreign_key "core_entities", "core_companies", column: "company_id"
   add_foreign_key "core_entities", "master_data_entity_types", column: "entity_type_id"
   add_foreign_key "core_personal_infos", "core_entities", column: "entity_id"

@@ -12,6 +12,10 @@ role_data = [
 role_data.each do |role_attrs|
   MasterData::Role.find_or_create_by!(slug: role_attrs[:slug]) do |role|
     role.name = role_attrs[:name]
+    role.slug = role_attrs[:slug]
+    role.scope = role_attrs[:scope]
+    role.position = role_attrs[:position]
+    role.description = role_attrs[:description]
   end
 end
 

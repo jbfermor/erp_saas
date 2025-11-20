@@ -84,15 +84,34 @@ begin
   mother_account = Saas::Account.find_or_create_by!(slug: "master") do |acc|
     acc.name = "SaaS Master"
     acc.subdomain = "master"
-    acc.database_name = "master"
     acc.plan = global_plan
   end
 
-  puts "✅ Cuenta madre creada o existente: #{mother_account.name} (DB: #{mother_account.database_name})"
+  tenant_database = Saas::TenantDatabase.find_or_create_by!(saas_account: mother_account) do |tdb|
+      tdb.saas_account = mother_account
+      tdb.database_name = "master"
+      tdb.username = "postgres"
+      tdb.password = "postgres"
+      tdb.host = "localhost"
+      tdb.port = 5432
+  end
+
+  puts "✅ Cuenta madre creada o existente: #{mother_account.name} (DB: #{tenant_database.database_name})"
 rescue => e
   puts "❌ Error creando la cuenta madre: #{e.message}"
   raise e
 end
+
+# 3️⃣ Configurar tenant master
+mother_account.setup_tenant!(
+  tenant_database_data: tenant_database.connection_hash,
+  saas_account: mother_account,
+  company_data: { name: "SaaS Global", slug: "saas-global", account: mother_account },
+  owner_email: "owner@saas.com", 
+  owner_password: "changeme"
+)
+
+puts "🎉 Tenant master listo."
 
 # ---------------------------------------------------------
 # 🏁 4️⃣ Resumen final
