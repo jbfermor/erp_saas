@@ -1,0 +1,10 @@
+<h1>Bienvenido a <%= @tenant.name %></h1>
+<p>Company: <%= @company.name %></p>
+<p>Email: <%= current_user.email %></p>
+
+<h2>Tus roles en esta company:</h2>
+<ul>
+  <% @user_roles.each do |role| %>
+    <li><%= role.name %></li>
+  <% end %>
+</ul>

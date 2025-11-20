@@ -38,5 +38,9 @@ module ErpSaas
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    require_relative "../app/middleware/tenant_resolver"
+    config.middleware.use TenantResolver
+
   end
 end
