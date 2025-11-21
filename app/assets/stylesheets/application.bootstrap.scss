@@ -34,6 +34,12 @@
   border-radius: .5rem;
 }
 
+.card:hover {
+  transform: translateY(-3px);
+  transition: 0.2s ease;
+  box-shadow: 0 0.75rem 1rem rgba(0,0,0,0.15);
+}
+
 /* -------------------------------------------
    NAVBAR DEFAULTS
 -------------------------------------------- */
