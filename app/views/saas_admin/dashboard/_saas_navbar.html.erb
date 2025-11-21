@@ -1,0 +1,27 @@
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+  <div class="container-fluid">
+    <span class= "navbar-text text-white">
+        <a class="navbar-brand" href="<%= root_path %>">ERP SaaS</a>
+        | <%= current_saas_user.email %> | <%= current_saas_user.saas_role_name %>
+    </span>
+    <% if saas_user_signed_in? %>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+              <li class="nav-item"><%= link_to "Accounts", "#", class: "nav-link" %></li>
+              <li class="nav-item"><%= link_to "Planes", "#", class: "nav-link" %></li>
+              <li class="nav-item"><%= link_to "Módulos", "#", class: "nav-link" %></li>
+              <li class="nav-item"><%= link_to "Usuarios del SaaS", "#", class: "nav-link" %></li>
+              <li class="nav-item">
+                <%= link_to "Logout", destroy_saas_user_session_path, method: :delete, class: "btn btn-sm btn-danger" %>
+              </li>
+          </ul>
+        </div>
+    <% else %>
+        <%= link_to "Login", new_saas_user_session_path, class: "btn btn-success" %>
+    <% end %>
+  </div>
+</nav>

@@ -4,8 +4,8 @@ module Saas
 
     devise :database_authenticatable, :recoverable, :rememberable, :validatable
 
-    belongs_to :role, class_name: "Saas::Role"
+    belongs_to :saas_role, class_name: "Saas::Role"
 
-    delegate :name, to: :role, prefix: true
+    delegate :name, to: :saas_role, prefix: true
   end
 end

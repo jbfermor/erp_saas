@@ -1,2 +1,56 @@
 @import 'bootstrap/scss/bootstrap';
 @import 'bootstrap-icons/font/bootstrap-icons';
+
+/* ---------------------------------------------------
+   Application Bootstrap Stylesheet
+   Global Dark Theme + Custom UI for Entire App
+---------------------------------------------------- */
+
+/* Import Bootstrap (CDN version will NOT conflict) */
+@import "bootstrap";
+
+/* -------------------------------------------
+   TABLE DEFAULTS
+   Apply striped, hover and shadow automatically
+-------------------------------------------- */
+
+/* Todas las tablas con class="table" heredarán estas clases */
+.table {
+  @extend .table-striped;
+  @extend .table-hover;
+  @extend .shadow-sm;     /* sombra ligera */
+}
+
+/* Si quieres más sombra: */
+/* @extend .shadow; */
+/* @extend .shadow-lg; */
+
+
+/* -------------------------------------------
+   CARD DEFAULTS
+-------------------------------------------- */
+.card {
+  @extend .shadow-sm;   /* sombra ligera por defecto */
+  border-radius: .5rem;
+}
+
+/* -------------------------------------------
+   NAVBAR DEFAULTS
+-------------------------------------------- */
+.navbar {
+   @extend .navbar-dark;
+   @extend .navbar-expand-lg;
+   @extend .bg-dark;
+
+   color: #fff !important;
+
+   a.nav-link,
+   .navbar-brand,
+   .navbar-toggler-icon {
+      color: #fff !important;
+   }
+
+   a.nav-link:hover {
+      color: #f8f9fa !important; // un blanco un poco más brillante al hover
+   }
+}

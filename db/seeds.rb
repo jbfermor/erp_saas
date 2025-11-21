@@ -54,6 +54,40 @@ rescue => e
 end
 
 # ---------------------------------------------------------
+# 🧩 3️⃣ Creamos los roles del Saas
+# ---------------------------------------------------------
+begin
+  puts "🏗 Creando roles del SaaS..."
+  saas_owner_role = Saas::Role.find_or_create_by!(name: "saas_owner") do |role|
+    role.name = "saas_owner"
+    puts "🏗 Rol #{role.name} creado"
+  end
+  Saas::Role.find_or_create_by!(name: "saas_admin") do |role|
+    role.name = "saas_admin"
+    puts "🏗 Rol #{role.name} creado"
+  end
+rescue => e
+  puts "❌ Error creando roles del SaaS: #{e.message}"
+  raise e
+end
+
+# ---------------------------------------------------------
+# 🧩 3️⃣ Creamos el owner del Saas
+# ---------------------------------------------------------
+begin
+  puts "🏗 Creando owner del SaaS..."
+  Saas::User.find_or_create_by!(email: "owner@saas.com") do |user|
+    user.email = "owner@saas.com"
+    user.password = "changeme"
+    user.password_confirmation = "changeme"
+    user.saas_role = saas_owner_role
+  end
+rescue => e
+  puts "❌ Error creando owner del SaaS: #{e.message}"
+  raise e
+end
+
+# ---------------------------------------------------------
 # 🧩 3️⃣ Crear la cuenta madre (account principal)
 # ---------------------------------------------------------
 puts "🏗 Creando cuenta madre (SaaS Master)..."

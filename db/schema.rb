@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_05_193833) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -295,6 +295,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_193833) do
     t.index ["key"], name: "index_saas_plans_on_key", unique: true
   end
 
+  create_table "saas_roles", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "saas_tenant_databases", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "saas_account_id", null: false
     t.string "database_name", null: false
@@ -308,6 +314,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_193833) do
     t.datetime "updated_at", null: false
     t.index ["database_name"], name: "index_saas_tenant_databases_on_database_name", unique: true
     t.index ["saas_account_id"], name: "index_saas_tenant_databases_on_saas_account_id"
+  end
+
+  create_table "saas_users", force: :cascade do |t|
+    t.string "email", default: "", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.string "reset_password_token"
+    t.datetime "reset_password_sent_at"
+    t.datetime "remember_created_at"
+    t.bigint "saas_role_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_saas_users_on_email", unique: true
+    t.index ["reset_password_token"], name: "index_saas_users_on_reset_password_token", unique: true
+    t.index ["saas_role_id"], name: "index_saas_users_on_saas_role_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -332,4 +352,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_193833) do
   add_foreign_key "saas_plan_modules", "saas_modules", column: "module_id"
   add_foreign_key "saas_plan_modules", "saas_plans", column: "plan_id"
   add_foreign_key "saas_tenant_databases", "saas_accounts"
+  add_foreign_key "saas_users", "saas_roles"
 end
