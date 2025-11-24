@@ -1,8 +1,6 @@
 module SaasAdmin
-  class DashboardController < ApplicationController
+  class DashboardController < SaasAdmin::BaseController
     before_action :authenticate_saas_user!
-
-    layout "saas"
 
     def index
     end

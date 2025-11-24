@@ -8,6 +8,6 @@ module MasterData
   class AddressType < ApplicationRecord
     has_many :addresses, class_name: "Core::Address", dependent: :nullify
 
-    validates :name, :code, presence: true
+    validates :name, presence: true
   end
 end

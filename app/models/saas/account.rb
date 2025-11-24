@@ -3,13 +3,9 @@ require "pg"
 
 module Saas
   class Account < ApplicationRecord
-    has_one :saas_tenant_database, class_name: "Saas::TenantDatabase", dependent: :destroy
+    has_one :saas_tenant_database, class_name: "Saas::TenantDatabase", 
+            foreign_key: :saas_account_id, dependent: :destroy
     accepts_nested_attributes_for :saas_tenant_database
-
-    has_many :subscriptions, class_name: "Saas::Subscription", dependent: :destroy
-    has_many :modules, through: :subscriptions, class_name: "Saas::Module"
-
-    belongs_to :plan, class_name: "Saas::Plan", optional: true
 
     validates :name, :slug, :subdomain, presence: true
     validates :slug, :subdomain, uniqueness: true

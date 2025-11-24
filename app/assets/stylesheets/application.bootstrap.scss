@@ -16,9 +16,15 @@
 
 /* Todas las tablas con class="table" heredarán estas clases */
 .table {
-  @extend .table-striped;
-  @extend .table-hover;
-  @extend .shadow-sm;     /* sombra ligera */
+   
+   @extend .table-striped;
+   @extend .table-hover;
+   @extend .shadow-sm;     /* sombra ligera */
+}
+
+.th {
+   @extend .text-white;    /* encabezados de tabla en blanco */
+   @extend .bg-dark;
 }
 
 /* Si quieres más sombra: */

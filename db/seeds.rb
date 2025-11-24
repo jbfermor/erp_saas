@@ -29,24 +29,7 @@ begin
 
   ActiveRecord::Tasks::DatabaseTasks.migrate
 
-  # ---------------------------------------------------------
-  # 🌱 2️⃣ Cargar seeds secundarios (master_data)
-  # ---------------------------------------------------------
-  puts "🌱 Cargando seeds de master_data..."
-  master_data_path = Rails.root.join("db", "seeds", "master_data", "*.rb")
-
-  Dir[master_data_path].sort.each do |file|
-    seed_name = File.basename(file, ".rb")
-    puts "   → Ejecutando #{seed_name}..."
-    begin
-      load file
-    rescue => e
-      puts "   ❌ Error al cargar #{seed_name}: #{e.message}"
-    end
-  end
-
-  puts "✅ Seeds de master_data cargados correctamente."
-
+  puts "✅ Migraciones de base principal completadas."
 rescue => e
   puts "❌ Error al conectar o migrar la base principal: #{e.message}"
   puts e.backtrace.first(10)
@@ -93,32 +76,10 @@ end
 puts "🏗 Creando cuenta madre (SaaS Master)..."
 
 begin
-  global_plan = Saas::Plan.find_or_create_by!(key: "saas") do |plan|
-    plan.name = "Core SaaS Plan"
-    plan.description = "Incluye todos los módulos base del sistema"
-  end
-
-  base_modules = [
-    { key: "saas", name: "Gestión del SaaS", description: "Administración de tenants, planes y suscripciones" },
-    { key: "core", name: "Núcleo", description: "Funciones base del sistema" }
-  ]
-
-  base_modules.each do |mod|
-    Saas::Module.find_or_create_by!(key: mod[:key]) do |m|
-      m.name = mod[:name]
-      m.description = mod[:description]
-      m.active = true
-    end
-  end
-
-  Saas::Module.find_each do |mod|
-    global_plan.modules << mod unless global_plan.modules.exists?(mod.id)
-  end
 
   mother_account = Saas::Account.find_or_create_by!(slug: "master") do |acc|
     acc.name = "SaaS Master"
     acc.subdomain = "master"
-    acc.plan = global_plan
   end
 
   tenant_database = Saas::TenantDatabase.find_or_create_by!(saas_account: mother_account) do |tdb|

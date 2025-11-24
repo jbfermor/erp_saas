@@ -8,8 +8,7 @@ module MasterData
   class EntityType < ApplicationRecord
     has_many :entities, class_name: "Core::Entity", dependent: :nullify
 
-    validates :name, :code, presence: true
-    validates :code, uniqueness: true
+    validates :name, presence: true
 
     scope :system_defined, -> { where(system: true) }
   end

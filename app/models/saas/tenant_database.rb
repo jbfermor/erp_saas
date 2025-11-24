@@ -1,7 +1,7 @@
 # app/models/saas/tenant_database.rb
 module Saas
   class TenantDatabase < ApplicationRecord
-    belongs_to :saas_account, class_name: "Saas::Account"
+    belongs_to :saas_account, class_name: "Saas::Account", foreign_key: :saas_account_id
 
     validates :database_name, :username, :password, :host, :port, presence: true
     validates :database_name, uniqueness: { scope: :host }

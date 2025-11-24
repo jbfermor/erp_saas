@@ -23,7 +23,10 @@ module Saas
       puts "❌ Error inicializando tenant #{saas_account.slug}: #{e.message}"
       raise e
     ensure
-      ActiveRecord::Base.establish_connection(Rails.configuration.database_configuration[Rails.env])
+      base_cfg = Rails.configuration.database_configuration[Rails.env]
+      base_cfg = base_cfg["primary"] if base_cfg.is_a?(Hash) && base_cfg.key?("primary")
+
+      ActiveRecord::Base.establish_connection(base_cfg)    
     end
 
     private
@@ -39,6 +42,13 @@ module Saas
 
       require "active_record/tasks/database_tasks"
       ActiveRecord::Tasks::DatabaseTasks.migrate
+      ActiveRecord::Tasks::DatabaseTasks.migrations_paths = [
+        Rails.root.join("db/tenants/core"),
+        Rails.root.join("db/tenants/master_data"),
+        Rails.root.join("db/tenants/modules")
+      ]
+
+  ActiveRecord::Tasks::DatabaseTasks.migrate
 
       puts "✅ Migraciones completadas."
     end
@@ -72,31 +82,50 @@ module Saas
     def setup_company_and_owner!
       puts "🏗 Creando estructura principal del tenant..."
 
-      company = Core::Company.create!(
-        name: company_data[:name],
-        slug: company_data[:slug],
-        saas_account_id: saas_account.id
-      )
+      company = Core::Company.find_or_create_by!(name: company_data[:name]) do |c|
+        c.name = company_data[:name]
+        c.slug = company_data[:slug]
+        c.saas_account_id = saas_account.id
+      end
       puts "🏢 Company creada: #{company.name}"
 
       entity = Core::Entity.create!(
         company: company,
-        entity_type: MasterData::EntityType.find_by!(code: "individual")
+        entity_type: MasterData::EntityType.find_by!(slug: "individual")
       )
 
-      user = Core::User.create!(
-        entity: entity,
-        company: company,
-        email: owner_email,
-        password: owner_password,
-        password_confirmation: owner_password
-      )
-      puts "🧑‍💼 Usuario principal creado: #{user.email}"
+      user = Core::User.find_or_create_by!(email: owner_email) do |u|
+        u.entity = entity
+        u.company = company
+        u.email = owner_email
+        u.password = owner_password
+        puts "🧑‍💼 Usuario principal creado: #{u.email}"
+        u.password_confirmation = owner_password
+        owner_role = MasterData::Role.find_by!(name: "Owner")
+        ur = Core::UserRole.create!(user: u, role: owner_role, company: company)
+        puts "🔐 Rol asignado: #{ur.role.name}"
+      end
 
-      owner_role = MasterData::Role.find_by!(name: "Owner")
-      ur = Core::UserRole.create!(user: user, role: owner_role, company: company)
+      plan = MasterData::Plan.find_or_create_by!(name: "Global Plan") do |p|
+        p.name = "Global Plan"
+        p.slug = "global_plan"
+        p.description = "Plan global con todos los módulos"
+      end
 
-      puts "🔐 Rol asignado: #{ur.role.name}"
+      MasterData::Module.find_each do |mod|
+        plan.master_data_modules << mod unless plan.master_data_modules.exists?(mod.id)
+      end
+
+      plan.master_data_modules.each do |m|
+        subscription = Core::Subscription.create!(
+          company: company,
+          module: m,
+          active: true
+        )
+      end
+      puts "📦 Suscripción creada para el plan: #{plan.name}"
+
+      puts "✅ Estructura principal del tenant creada correctamente."
     end
   end
 end

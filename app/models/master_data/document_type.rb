@@ -8,7 +8,6 @@ module MasterData
   class DocumentType < ApplicationRecord
     has_many :personal_infos, class_name: "Core::PersonalInfo", dependent: :restrict_with_error
 
-    validates :name, :code, presence: true
-    validates :code, uniqueness: true
+    validates :name, presence: true
   end
 end

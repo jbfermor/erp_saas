@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  get "accounts/index"
+  get "accounts/new"
+  get "accounts/edit"
+  get "accounts/show"
   # -----------------------------
   #  Core Users (Tenants)
   # -----------------------------
@@ -37,5 +41,7 @@ Rails.application.routes.draw do
   # -----------------------------
   namespace :saas_admin do
     get "/", to: "dashboard#index", as: :dashboard
+    resources :users
+    resources :accounts
   end
 end

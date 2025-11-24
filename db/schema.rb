@@ -152,7 +152,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
     t.uuid "module_id", null: false
     t.datetime "starts_at"
     t.datetime "ends_at"
-    t.string "status", default: "active"
+    t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["company_id"], name: "index_core_subscriptions_on_company_id"
@@ -190,11 +190,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
 
   create_table "master_data_address_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
-    t.string "code", null: false
     t.string "slug", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["code"], name: "index_master_data_address_types_on_code", unique: true
     t.index ["slug"], name: "index_master_data_address_types_on_slug", unique: true
   end
 
@@ -210,23 +208,47 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
 
   create_table "master_data_document_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
-    t.string "code", null: false
     t.string "slug", null: false
     t.boolean "system"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["code"], name: "index_master_data_document_types_on_code", unique: true
     t.index ["slug"], name: "index_master_data_document_types_on_slug", unique: true
   end
 
   create_table "master_data_entity_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
-    t.string "code", null: false
     t.string "slug", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["code"], name: "index_master_data_entity_types_on_code", unique: true
     t.index ["slug"], name: "index_master_data_entity_types_on_slug", unique: true
+  end
+
+  create_table "master_data_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_master_data_modules_on_slug", unique: true
+  end
+
+  create_table "master_data_plan_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "master_data_plan_id", null: false
+    t.uuid "master_data_module_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["master_data_module_id"], name: "index_master_data_plan_modules_on_master_data_module_id"
+    t.index ["master_data_plan_id", "master_data_module_id"], name: "idx_on_master_data_plan_id_master_data_module_id_2c675440c5", unique: true
+    t.index ["master_data_plan_id"], name: "index_master_data_plan_modules_on_master_data_plan_id"
+  end
+
+  create_table "master_data_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "master_data_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -242,12 +264,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
 
   create_table "master_data_tax_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
-    t.string "code", null: false
     t.string "slug", null: false
     t.boolean "system"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["code"], name: "index_master_data_tax_types_on_code", unique: true
     t.index ["slug"], name: "index_master_data_tax_types_on_slug", unique: true
   end
 
@@ -256,33 +276,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
     t.string "slug", null: false
     t.string "subdomain", null: false
     t.string "status", default: "active", null: false
-    t.uuid "plan_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["plan_id"], name: "index_saas_accounts_on_plan_id"
     t.index ["slug"], name: "index_saas_accounts_on_slug", unique: true
     t.index ["subdomain"], name: "index_saas_accounts_on_subdomain", unique: true
-  end
-
-  create_table "saas_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "name", null: false
-    t.string "key", null: false
-    t.text "description"
-    t.boolean "active", default: true
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["key"], name: "index_saas_modules_on_key", unique: true
-  end
-
-  create_table "saas_plan_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "plan_id", null: false
-    t.uuid "module_id", null: false
-    t.boolean "enabled", default: true, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["module_id"], name: "index_saas_plan_modules_on_module_id"
-    t.index ["plan_id", "module_id"], name: "index_saas_plan_modules_on_plan_id_and_module_id", unique: true
-    t.index ["plan_id"], name: "index_saas_plan_modules_on_plan_id"
   end
 
   create_table "saas_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -342,15 +339,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
   add_foreign_key "core_personal_infos", "core_entities", column: "entity_id"
   add_foreign_key "core_personal_infos", "master_data_document_types", column: "document_type_id"
   add_foreign_key "core_subscriptions", "core_companies", column: "company_id"
-  add_foreign_key "core_subscriptions", "saas_modules", column: "module_id"
+  add_foreign_key "core_subscriptions", "master_data_modules", column: "module_id"
   add_foreign_key "core_user_roles", "core_companies", column: "company_id", on_delete: :cascade
   add_foreign_key "core_user_roles", "core_users", column: "user_id", on_delete: :cascade
   add_foreign_key "core_user_roles", "master_data_roles", column: "role_id", on_delete: :cascade
   add_foreign_key "core_users", "core_companies", column: "company_id", on_delete: :cascade
   add_foreign_key "core_users", "core_entities", column: "entity_id"
-  add_foreign_key "saas_accounts", "saas_plans", column: "plan_id"
-  add_foreign_key "saas_plan_modules", "saas_modules", column: "module_id"
-  add_foreign_key "saas_plan_modules", "saas_plans", column: "plan_id"
+  add_foreign_key "master_data_plan_modules", "master_data_modules"
+  add_foreign_key "master_data_plan_modules", "master_data_plans"
   add_foreign_key "saas_tenant_databases", "saas_accounts"
   add_foreign_key "saas_users", "saas_roles"
 end
