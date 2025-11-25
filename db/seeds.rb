@@ -82,13 +82,14 @@ begin
     acc.subdomain = "master"
   end
 
-  tenant_database = Saas::TenantDatabase.find_or_create_by!(saas_account: mother_account) do |tdb|
-      tdb.saas_account = mother_account
-      tdb.database_name = "master"
-      tdb.username = "postgres"
-      tdb.password = "postgres"
-      tdb.host = "localhost"
-      tdb.port = 5432
+  tenant_database = Saas::TenantDatabase.find_or_create_by!(database_name: "master") do |db|
+    db.saas_account = mother_account
+    db.adapter = "postgresql"
+    db.host = "localhost"
+    db.port = 5432
+    db.password = "postgres"
+    db.username = "postgres"
+    db.database_name = "master"
   end
 
   puts "✅ Cuenta madre creada o existente: #{mother_account.name} (DB: #{tenant_database.database_name})"
@@ -98,13 +99,16 @@ rescue => e
 end
 
 # 3️⃣ Configurar tenant master
-mother_account.setup_tenant!(
+company = mother_account.setup_tenant!(
   tenant_database_data: tenant_database.connection_hash,
   saas_account: mother_account,
   company_data: { name: "SaaS Global", slug: "saas-global", account: mother_account },
   owner_email: "owner@saas.com", 
   owner_password: "changeme"
 )
+
+plan = MasterData::PlanBootstrapService.new(company).call
+Tenant::SubscriptionSetupService.new(company, plan).call
 
 puts "🎉 Tenant master listo."
 

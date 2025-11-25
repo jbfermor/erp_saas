@@ -8,5 +8,10 @@ module Core
     has_many :roles, through: :user_roles, class_name: "MasterData::Role"
 
     validates :email, presence: true, uniqueness: true
-  end
+
+    scope :non_system, -> {
+      where.not(id: joins(:roles).where(master_data_roles: { name: 'System' }))
+    } 
+    
+   end
 end

@@ -3,6 +3,7 @@ puts "🌍 Cargando tipos de idendidad..."
 entity_type_data = [
   { name: "Persona fisica", slug: "individual" },
   { name: "Persona jurídica", slug: "bussiness" },
+  { name: "Sistema", slug: "system" },
 ]
 
 entity_type_data.each do |et_attrs|

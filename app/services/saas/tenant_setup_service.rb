@@ -2,23 +2,25 @@
 module Saas
   class TenantSetupService
     attr_reader :tenant_database_data, :saas_account, :company_data,
-                :owner_email, :owner_name, :owner_password
+                :owner_email, :owner_name, :owner_password, :plan
 
-    def initialize(tenant_database_data:, saas_account:, company_data:, owner_email:, owner_name: nil, owner_password: "changeme")
+    def initialize(tenant_database_data:, saas_account:, company_data:, owner_email:, owner_name: nil, owner_password: "changeme", plan: nil)
       @tenant_database_data = tenant_database_data
       @saas_account = saas_account
       @company_data = company_data
       @owner_email = owner_email
       @owner_name = owner_name || owner_email.split("@").first
       @owner_password = owner_password
+      @plan = plan
     end
 
     def call
       migrate_schema!
       switch_to_tenant_connection!
       seed_master_data!
-      setup_company_and_owner!
+      company = setup_company_and_owner!
       puts "✅ Tenant #{saas_account.slug} inicializado correctamente."
+      return company unless @plan
     rescue => e
       puts "❌ Error inicializando tenant #{saas_account.slug}: #{e.message}"
       raise e
@@ -48,7 +50,7 @@ module Saas
         Rails.root.join("db/tenants/modules")
       ]
 
-  ActiveRecord::Tasks::DatabaseTasks.migrate
+      ActiveRecord::Tasks::DatabaseTasks.migrate
 
       puts "✅ Migraciones completadas."
     end
@@ -106,26 +108,46 @@ module Saas
         puts "🔐 Rol asignado: #{ur.role.name}"
       end
 
-      plan = MasterData::Plan.find_or_create_by!(name: "Global Plan") do |p|
-        p.name = "Global Plan"
-        p.slug = "global_plan"
-        p.description = "Plan global con todos los módulos"
-      end
-
-      MasterData::Module.find_each do |mod|
-        plan.master_data_modules << mod unless plan.master_data_modules.exists?(mod.id)
-      end
-
-      plan.master_data_modules.each do |m|
-        subscription = Core::Subscription.create!(
-          company: company,
-          module: m,
-          active: true
-        )
-      end
-      puts "📦 Suscripción creada para el plan: #{plan.name}"
+      # Crear usuario sistema
+      system_user = create_system_user(company)
 
       puts "✅ Estructura principal del tenant creada correctamente."
+
+      asign_plan_to_company(company, @plan) if @plan
+
+      return company unless @plan
+    end
+
+    def asign_plan_to_company(company, plan)
+      return unless plan
+
+      company_plan = MasterData::CompanyPlan.find_or_create_by!(company: company) do |cp|
+        cp.company = company
+        cp.plan = plan
+      end
+
+      puts "📋 Plan asignado a la compañía: #{company_plan.plan.name}"
+    end
+
+    def create_system_user(company)
+      entity = Core::Entity.create!(
+        company: company,
+        entity_type: MasterData::EntityType.find_by!(slug: "system")
+      )
+
+      user = Core::User.find_or_create_by!(email: "system@saas.com") do |u|
+        u.email = "system@saas.com",
+        u.password = "systempassword",
+        u.company = company,
+        u.entity = entity
+        system_role = MasterData::Role.find_by!(name: "Owner")
+        Core::UserRole.create!(user: user, role: system_role, company: company)
+      
+      end
+
+      
+      puts "🤖 Usuario sistema creado: #{user.email}"
+    
     end
   end
 end

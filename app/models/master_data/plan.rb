@@ -10,6 +10,11 @@ module MasterData
     has_many :master_data_modules,
            through: :plan_modules
 
+    has_many :company_plans,
+         class_name: "MasterData::CompanyPlan",
+         foreign_key: :master_data_plan_id,
+         dependent: :restrict_with_error
+
     validates :name, :slug, presence: true
 
     after_commit :enqueue_replicator, on: [:create, :update]
