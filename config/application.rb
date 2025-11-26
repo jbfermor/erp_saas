@@ -41,6 +41,9 @@ module ErpSaas
 
     require_relative "../app/middleware/tenant_resolver"
     config.middleware.use TenantResolver
+    require_relative "../app/middleware/tenant_subdomain_middleware"
+    config.middleware.use TenantSubdomainMiddleware
+
 
   end
 end
