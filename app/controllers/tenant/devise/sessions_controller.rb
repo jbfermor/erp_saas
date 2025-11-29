@@ -3,18 +3,18 @@
 module Tenant
   module Devise
     class SessionsController < Devise::SessionsController
-      layout "teant"
+      layout "tenant"
       before_action :set_tenant_from_env
 
 
       # Después del login → dashboard del SaaS
       def after_sign_in_path_for(resource)
-        saas_admin_dashboard_path
+        tenant_dashboard_path
       end
 
       # Después del logout → /login
       def after_sign_out_path_for(resource)
-        "/login"
+        
       end
 
       private

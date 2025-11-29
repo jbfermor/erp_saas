@@ -16,14 +16,17 @@ Rails.application.routes.draw do
   constraints ->(req) { req.subdomain.present? && req.subdomain != 'www' } do
     scope module: 'tenant', as: 'tenant' do
       # Importante: indicamos module y controllers apuntando a tenant/
-      devise_for :users, class_name: 'Core::User', module: :devise, controllers: {
-        sessions: 'tenant/devise/sessions',
-        registrations: 'tenant/devise/registrations',
-        passwords: 'tenant/devise/passwords'
-      }
+      devise_for :users, as: "tenant",
+        class_name: 'Core::User', 
+        module: :devise, 
+        controllers: {
+          sessions: 'devise/sessions',
+          registrations: 'devise/registrations',
+          passwords: 'devise/passwords'
+        }
 
       # Rutas tenant nombradas prefix tenant_...
-      get '/', to: 'dashboard#index', as: :dashboard
+      root to: 'dashboard#index'
       resources :users, controller: 'users' # genera tenant_users_path
       # ... resto de rutas tenant
     end

@@ -1,12 +1,12 @@
 <nav class="navbar navbar-dark bg-dark navbar-expand-lg">
   <div class="container-fluid">
     <span class= "navbar-text text-white">  
-      <a class="navbar-brand" href="<%= root_path if user_signed_in? %>">ERP SaaS</a>
-      <% if user_signed_in? %>
-      <%= current_user.company.name %> | <%= current_user.email %> | <%= current_user.user_roles.find_by(company: current_user.company).role.name %>
+      <a class="navbar-brand" href="<%= root_path if tenant_user_signed_in? %>">ERP SaaS</a>
+      <% if tenant_user_signed_in? %>
+      <%= current_tenant_user.company.name %> | <%= current_tenant_user.email %> | <%= current_tenant_user.user_roles.find_by(company: current_tenant_user.company).role.name %>
       <% end %>
     </span>
-    <% if user_signed_in? %>
+    <% if tenant_user_signed_in? %>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>

@@ -1,6 +1,5 @@
 module Tenant
   class DashboardController < Tenant::BaseController
-    before_action :authenticate_user!
 
     def index
       @company = Core::Company.first
