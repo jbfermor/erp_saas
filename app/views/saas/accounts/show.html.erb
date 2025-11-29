@@ -1,0 +1,27 @@
+<h3>Account: <%= @account.name %></h3>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <p><strong>Slug:</strong> <%= @account.slug %></p>
+
+    <% if @account.saas_tenant_database %>
+      <hr>
+      <h6>Base de Datos del Tenant</h6>
+
+      <p><strong>Nombre BD:</strong> <%= @account.saas_tenant_database.database_name %></p>
+      <p><strong>Host:</strong> <%= @account.saas_tenant_database.host %></p>
+      <p><strong>Usuario:</strong> <%= @account.saas_tenant_database.username %></p>
+    <% end %>
+  </div>
+</div>
+
+<div class="d-flex gap-2">
+  <%= link_to "Editar", edit_saas_account_path(@account), class: "btn btn-warning" %>
+
+  <%= button_to "Eliminar", saas_account_path(@account),
+              method: :delete,
+              data: { confirm: "¿Eliminar account?" },
+              class: "btn btn-danger" %>
+
+  <%= link_to "Volver", saas_accounts_path, class: "btn btn-secondary" %>
+</div>

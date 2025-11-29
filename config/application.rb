@@ -38,12 +38,12 @@ module ErpSaas
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+    config.main_domain = ENV.fetch("localhost", "lvh.me")
 
-    require_relative "../app/middleware/tenant_resolver"
-    config.middleware.use TenantResolver
     require_relative "../app/middleware/tenant_subdomain_middleware"
-    config.middleware.use TenantSubdomainMiddleware
 
+    # config.middleware.insert_before 0, TenantSubdomainMiddleware
+    config.middleware.use TenantSubdomainMiddleware
 
   end
 end

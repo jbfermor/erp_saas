@@ -1,0 +1,25 @@
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+  <div class="container-fluid">
+    <span class= "navbar-text text-white">  
+      <a class="navbar-brand" href="<%= root_path if user_signed_in? %>">ERP SaaS</a>
+      <% if user_signed_in? %>
+      <%= current_user.company.name %> | <%= current_user.email %> | <%= current_user.user_roles.find_by(company: current_user.company).role.name %>
+      <% end %>
+    </span>
+    <% if user_signed_in? %>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><%= link_to "Configuración", "#", class: "nav-link" %></li>
+            <li class="nav-item"><%= link_to "Usuarios", tenant_users_path, class: "nav-link" %></li>
+            <li class="nav-item">
+              <%= button_to "Logout", destroy_tenant_user_session_path, method: :delete, class: "btn btn-sm btn-danger" %>
+            </li>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+</nav>

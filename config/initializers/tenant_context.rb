@@ -1,10 +1,8 @@
 module TenantContext
-  def self.switch(slug)
-    account = Saas::Account.find_by(slug: slug)
-    raise "Tenant '#{slug}' not found" unless account
+  def self.switch(account)   
 
     tenant_db = account.saas_tenant_database
-    raise "Tenant '#{slug}' has no database config" unless tenant_db
+    raise "Tenant '#{account.slug}' has no database config" unless tenant_db
 
     cfg = {
       adapter:  tenant_db.adapter,

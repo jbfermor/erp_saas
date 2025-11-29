@@ -1,62 +1,34 @@
+# config/routes.rb
+
 Rails.application.routes.draw do
-  namespace :tenant do
-    get "dashboard/index"
+  # Rutas globales del SaaS (landing, admin saas, etc.)
+  namespace :saas do
+    devise_for :users, class_name: 'Saas::User', module: :devise, controllers: {
+      sessions: 'saas/devise/sessions',
+      registrations: 'saas/devise/registrations'
+    }
+    root to: 'dashboard#index'
+    resources :accounts
+    resources :users
   end
 
-  # -----------------------
-  # ZONA PÚBLICA (sin subdominio)
-  # -----------------------
-  constraints(subdomain: '') do
-    authenticated :user do
-      root to: "dashboard#index", as: :authenticated_root
-    end
+  # Constraint para subdominios de tenants (excluye www, naked, etc)
+  constraints ->(req) { req.subdomain.present? && req.subdomain != 'www' } do
+    scope module: 'tenant', as: 'tenant' do
+      # Importante: indicamos module y controllers apuntando a tenant/
+      devise_for :users, class_name: 'Core::User', module: :devise, controllers: {
+        sessions: 'tenant/devise/sessions',
+        registrations: 'tenant/devise/registrations',
+        passwords: 'tenant/devise/passwords'
+      }
 
-    unauthenticated do
-      root to: "home#index"
-    end
-
-    # -----------------------------
-    #  SaaS Admin login (Saas::User)
-    # -----------------------------
-    devise_for :saas_users,
-              class_name: "Saas::User",
-              path: "",
-              controllers: {
-                sessions: "saas/sessions"
-              }
-
-    devise_scope :saas_user do
-      get    "/login",  to: "saas/sessions#new"
-      post   "/login",  to: "saas/sessions#create"
-      delete "/logout", to: "saas/sessions#destroy"
-    end
-
-    # -----------------------------
-    # SaaS Admin Dashboard
-    # -----------------------------
-    namespace :saas_admin do
-      get "/", to: "dashboard#index", as: :dashboard
-      resources :users
-      resources :accounts
+      # Rutas tenant nombradas prefix tenant_...
+      get '/', to: 'dashboard#index', as: :dashboard
+      resources :users, controller: 'users' # genera tenant_users_path
+      # ... resto de rutas tenant
     end
   end
 
-  # -----------------------
-  # ZONA MULTITENANT (con subdominio)
-  # -----------------------
-  constraints(SubdomainRequired) do
-    scope module: 'tenant' do
-      root to: 'dashboard#index', as: :tenant_root
-      # -----------------------------
-      #  Core Users (Tenants)
-      # -----------------------------
-      devise_for :users,
-             class_name: "Core::User",
-             controllers: {
-               sessions: "core/sessions"
-             }
-      # cualquier módulo más…
-    end
-  end
-  
+  # Fallback
+  root to: 'home#index'
 end

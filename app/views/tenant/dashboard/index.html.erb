@@ -1,2 +1,34 @@
-<h1>Tenant::Dashboard#index</h1>
-<p>Find me in app/views/tenant/dashboard/index.html.erb</p>
+<h1 class="mb-4">Panel del Tenant</h1>
+
+<div class="row">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Compañía</h5>
+        <p><strong><%= @company.name %></strong></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Usuarios</h5>
+        <p class="display-6"><%= @users_count %></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Módulos activos</h5>
+        <ul>
+          <% @modules.each do |sub| %>
+            <li><%= sub.module.name %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

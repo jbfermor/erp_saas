@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SaaS Admin</title>
+    <title>Panel de administración de <%= @company.name %></title>
 
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -21,7 +22,7 @@
 
     <!-- Navbar SaaS -->
     <header>
-      <%= render "saas/saas_navbar" %>
+      <%= render "tenant/tenant_navbar" %>
     </header>
 
     <!-- Contenido dinámico -->
@@ -38,3 +39,4 @@
 
   </body>
 </html>
+
