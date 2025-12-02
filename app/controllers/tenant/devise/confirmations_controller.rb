@@ -2,6 +2,9 @@
 module Tenant
   module Devise
     class ConfirmationsController < Devise::ConfirmationsController
+      layout "tenant"
+      append_view_path "app/views/tenant/devise"
+
       # GET /resource/confirmation/new
       # def new
       #   super

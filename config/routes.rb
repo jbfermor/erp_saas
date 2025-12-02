@@ -1,7 +1,8 @@
-# config/routes.rb
-
 Rails.application.routes.draw do
-  # Rutas globales del SaaS (landing, admin saas, etc.)
+
+  # ============================================================
+  # SaaS global (sin subdominio)
+  # ============================================================
   namespace :saas do
     devise_for :users, class_name: 'Saas::User', module: :devise, controllers: {
       sessions: 'saas/devise/sessions',
@@ -12,26 +13,37 @@ Rails.application.routes.draw do
     resources :users
   end
 
-  # Constraint para subdominios de tenants (excluye www, naked, etc)
-  constraints ->(req) { req.subdomain.present? && req.subdomain != 'www' } do
-    scope module: 'tenant', as: 'tenant' do
-      # Importante: indicamos module y controllers apuntando a tenant/
-      devise_for :users, as: "tenant",
-        class_name: 'Core::User', 
-        module: :devise, 
-        controllers: {
-          sessions: 'devise/sessions',
-          registrations: 'devise/registrations',
-          passwords: 'devise/passwords'
-        }
 
-      # Rutas tenant nombradas prefix tenant_...
-      root to: 'dashboard#index'
-      resources :users, controller: 'users' # genera tenant_users_path
-      # ... resto de rutas tenant
+  # ============================================================
+  # TENANT por SUBDOMINIO (master.lvh.me, cliente1.lvh.me, etc)
+  # ============================================================
+  constraints lambda { |req|
+    req.subdomain.present? && req.subdomain != "www"
+  } do
+    get "/__debug", to: proc { |env| [200, {}, ["TENANT DEBUG OK"]] }
+
+    # Devise tenant (sin prefijo)
+    devise_for :users,
+      class_name: 'Core::User',
+      module: :devise,
+      path: '',
+      controllers: {
+        sessions: 'devise/sessions',
+        registrations: 'devise/registrations',
+        passwords: 'devise/passwords'
+      },
+      as: :tenant
+
+    # Rutas tenant, SIN prefijo /tenant
+    scope module: :tenant do
+      root to: "dashboard#index", as: :tenant_root
+      resources :users
     end
   end
 
-  # Fallback
-  root to: 'home#index'
+
+  # ============================================================
+  # Fallback (dominio sin subdominio)
+  # ============================================================
+  root to: "home#index"
 end

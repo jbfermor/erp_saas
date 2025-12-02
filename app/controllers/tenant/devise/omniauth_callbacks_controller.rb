@@ -2,6 +2,9 @@
 module Tenant
   module Devise
     class OmniauthCallbacksController < Devise::OmniauthCallbacksController
+      layout "tenant"
+      append_view_path "app/views/tenant/devise"
+
       # You should configure your model like this:
       # devise :omniauthable, omniauth_providers: [:twitter]
 

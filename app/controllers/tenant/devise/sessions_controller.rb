@@ -4,6 +4,8 @@ module Tenant
   module Devise
     class SessionsController < Devise::SessionsController
       layout "tenant"
+      append_view_path "app/views/tenant/devise"
+
       before_action :set_tenant_from_env
 
 

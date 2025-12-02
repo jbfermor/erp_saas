@@ -2,6 +2,9 @@
 module Tenant
   module Devise
     class UnlocksController < Devise::UnlocksController
+      layout "tenant"
+      append_view_path "app/views/tenant/devise"
+
       # GET /resource/unlock/new
       # def new
       #   super

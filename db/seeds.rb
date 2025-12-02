@@ -85,7 +85,7 @@ begin
   tenant_database = Saas::TenantDatabase.find_or_create_by!(database_name: "master") do |db|
     db.saas_account = mother_account
     db.adapter = "postgresql"
-    db.host = "localhost"
+    db.host = "master.lvh.me"
     db.port = 5432
     db.password = "postgres"
     db.username = "postgres"

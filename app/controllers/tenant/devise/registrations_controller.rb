@@ -2,6 +2,9 @@
 module Tenant
   module Devise
     class RegistrationsController < Devise::RegistrationsController
+      layout "tenant"
+      append_view_path "app/views/tenant/devise"
+
       # before_action :configure_sign_up_params, only: [:create]
       # before_action :configure_account_update_params, only: [:update]
 

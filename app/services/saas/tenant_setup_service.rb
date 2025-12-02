@@ -5,7 +5,7 @@ module Saas
                 :owner_email, :owner_name, :owner_password, :plan
 
     def initialize(tenant_database_data:, saas_account:, company_data:, owner_email:, owner_name: nil, owner_password: "changeme", plan: nil)
-      @tenant_database_data = tenant_database_data
+      @tenant_database_data = tenant_database_data.deep_symbolize_keys
       @saas_account = saas_account
       @company_data = company_data
       @owner_email = owner_email
@@ -14,59 +14,100 @@ module Saas
       @plan = plan
     end
 
+    # Entry point
     def call
+      puts "⚙️ Ejecutando setup tenant: #{saas_account.slug}"
+
       migrate_schema!
       switch_to_tenant_connection!
       seed_master_data!
       company = setup_company_and_owner!
+      seed_database_config_for_company!(company)
+
       puts "✅ Tenant #{saas_account.slug} inicializado correctamente."
-      return company unless @plan
+      company
     rescue => e
-      puts "❌ Error inicializando tenant #{saas_account.slug}: #{e.message}"
+      puts "❌ Error inicializando tenant #{saas_account.slug}: #{e.class}: #{e.message}"
       raise e
     ensure
-      base_cfg = Rails.configuration.database_configuration[Rails.env]
-      base_cfg = base_cfg["primary"] if base_cfg.is_a?(Hash) && base_cfg.key?("primary")
-
-      ActiveRecord::Base.establish_connection(base_cfg)    
+      restore_primary_connection!
     end
 
     private
 
-
-    # -------------------------------
-    # 1️⃣ Migraciones
-    # -------------------------------
+    # ------------------------------------------------------------
+    # 1️⃣ Migraciones (Rails 8) - seguro: marca versiones ya aplicadas
+    # ------------------------------------------------------------
     def migrate_schema!
       puts "⚙️ Ejecutando migraciones para tenant #{saas_account.slug}..."
 
+      # Conectamos al tenant (debe existir la DB ya)
       ActiveRecord::Base.establish_connection(tenant_database_data)
+      conn = ActiveRecord::Base.connection
 
-      require "active_record/tasks/database_tasks"
-      ActiveRecord::Tasks::DatabaseTasks.migrate
-      ActiveRecord::Tasks::DatabaseTasks.migrations_paths = [
-        Rails.root.join("db/tenants/core"),
-        Rails.root.join("db/tenants/master_data"),
-        Rails.root.join("db/tenants/modules")
-      ]
+      migration_paths = [
+        Rails.root.join("db/tenants/core").to_s,
+        Rails.root.join("db/tenants/master_data").to_s,
+        Rails.root.join("db/tenants/modules").to_s
+      ].freeze
 
-      ActiveRecord::Tasks::DatabaseTasks.migrate
+      # Debug: listar archivos detectados
+      migration_paths.each do |path|
+        if Dir.exist?(path)
+          puts "Migraciones en #{path}:"
+          Dir["#{path}/*.rb"].sort.each { |f| puts " - #{File.basename(f)}" }
+        else
+          puts "Ruta de migraciones no existe (se ignora): #{path}"
+        end
+      end
 
-      puts "✅ Migraciones completadas."
+      # Asegurar schema_migrations en tenant
+      ensure_schema_migrations_table!(conn)
+
+      # Por cada path: marcar versiones cuyos objetos ya existan para evitar duplicados
+      migration_paths.each do |path|
+        next unless Dir.exist?(path)
+
+        # cargar versiones desde filenames (prefijo_timestamp)
+        Dir["#{path}/*.rb"].sort.each do |file|
+          version = File.basename(file).split("_").first
+          next if version.blank?
+
+          # Determinar tablas creadas por la migración (heurística)
+          tables = extract_tables_from_migration_file(file)
+
+          # Si la migración aparentemente crea tablas y todas están ya presentes → marcar versión aplicada
+          if tables.present?
+            if tables.all? { |t| conn.table_exists?(t) }
+              unless schema_migration_version_exists?(version)
+                puts "   ✔ Marcando como aplicada la migración #{version} (tablas ya existen: #{tables.join(", ")})"
+                insert_schema_migration_version(conn, version)
+              end
+            end
+          end
+        end
+      end
+
+      # Finalmente ejecutar migraciones pendientes (Rails 8)
+      # MigrationContext accepts array of paths (Rails 8+)
+      context = ActiveRecord::MigrationContext.new(migration_paths)
+      context.migrate
+
+      puts "✅ Migraciones completadas para tenant #{saas_account.slug}."
     end
 
-    # -------------------------------
-    # 2️⃣ Cambiar conexión para seeds
-    # -------------------------------
+    # ------------------------------------------------------------
+    # 2️⃣ Cambiar conexión para seeds (se asume que la DB tenant existe)
+    # ------------------------------------------------------------
     def switch_to_tenant_connection!
       puts "🔌 Cambiando conexión al tenant..."
       ActiveRecord::Base.establish_connection(tenant_database_data)
       puts "🔌 Conectado a la base de datos tenant."
     end
 
-    # -------------------------------
-    # 3️⃣ Seeds master_data
-    # -------------------------------
+    # ------------------------------------------------------------
+    # 3️⃣ Seeds master_data internos
+    # ------------------------------------------------------------
     def seed_master_data!
       puts "🌱 Ejecutando seeds de master_data internos..."
 
@@ -78,9 +119,9 @@ module Saas
       puts "✅ Seeds master_data completados."
     end
 
-    # -------------------------------
+    # ------------------------------------------------------------
     # 4️⃣ Crear Company → Entity → Owner User
-    # -------------------------------
+    # ------------------------------------------------------------
     def setup_company_and_owner!
       puts "🏗 Creando estructura principal del tenant..."
 
@@ -101,21 +142,25 @@ module Saas
         u.company = company
         u.email = owner_email
         u.password = owner_password
-        puts "🧑‍💼 Usuario principal creado: #{u.email}"
         u.password_confirmation = owner_password
-        owner_role = MasterData::Role.find_by!(name: "Owner")
-        ur = Core::UserRole.create!(user: u, role: owner_role, company: company)
-        puts "🔐 Rol asignado: #{ur.role.name}"
+      end
+
+      puts "🧑‍💼 Usuario principal creado/recuperado: #{user.email}"
+
+      owner_role = MasterData::Role.find_by!(name: "Owner")
+      unless Core::UserRole.exists?(user: user, role: owner_role, company: company)
+        Core::UserRole.create!(user: user, role: owner_role, company: company)
+        puts "🔐 Rol Owner asignado a #{user.email}"
       end
 
       # Crear usuario sistema
-      system_user = create_system_user(company)
+      create_system_user(company)
 
       puts "✅ Estructura principal del tenant creada correctamente."
 
       asign_plan_to_company(company, @plan) if @plan
 
-      return company unless @plan
+      company
     end
 
     def asign_plan_to_company(company, plan)
@@ -136,18 +181,95 @@ module Saas
       )
 
       user = Core::User.find_or_create_by!(email: "system@saas.com") do |u|
-        u.email = "system@saas.com",
-        u.password = "systempassword",
-        u.company = company,
+        u.email = "system@saas.com"
+        u.password = "systempassword"
+        u.password_confirmation = "systempassword"
+        u.company = company
         u.entity = entity
-        system_role = MasterData::Role.find_by!(name: "Owner")
-        Core::UserRole.create!(user: user, role: system_role, company: company)
-      
       end
 
-      
-      puts "🤖 Usuario sistema creado: #{user.email}"
-    
+      system_role = MasterData::Role.find_by!(name: "Owner")
+      unless Core::UserRole.exists?(user: user, role: system_role, company: company)
+        Core::UserRole.create!(user: user, role: system_role, company: company)
+      end
+
+      puts "🤖 Usuario sistema creado/recuperado: #{user.email}"
+      user
+    end
+
+    # ------------------------------------------------------------
+    # 5️⃣ Guardar MasterData::DatabaseConfig asociado a company
+    # ------------------------------------------------------------
+    def seed_database_config_for_company!(company)
+      puts "🔐 Guardando MasterData::DatabaseConfig para la company #{company.name}..."
+
+      # Normalización mínima (Rails puede dar host/database como string o symbol)
+      host     = tenant_database_data[:host] || tenant_database_data["host"]
+      port     = tenant_database_data[:port] || tenant_database_data["port"] || 5432
+      database = tenant_database_data[:database] || tenant_database_data["database_name"] || tenant_database_data[:db_name]
+      username = tenant_database_data[:username] || tenant_database_data["username"]
+      password = tenant_database_data[:password] || tenant_database_data["password"]
+
+      # Crear o actualizar el registro (vive en el tenant)
+      config = MasterData::DatabaseConfig.find_or_create_by!(company: company) do |cfg|
+        cfg.company = company
+        cfg.host = host
+        cfg.port = port
+        cfg.database_name = database
+        cfg.username = username
+        cfg.password = password
+      end
+
+      puts "🔐 MasterData::DatabaseConfig guardado (company_id=#{company.id})."
+      config
+    end
+
+    # -------------------------
+    # Helpers y utilidades
+    # -------------------------
+
+    def restore_primary_connection!
+      base_cfg = Rails.configuration.database_configuration[Rails.env]
+      base_cfg = base_cfg["primary"] if base_cfg.is_a?(Hash) && base_cfg.key?("primary")
+      ActiveRecord::Base.establish_connection(base_cfg)
+      puts "🔁 Restaurada conexión principal (#{base_cfg['database'] || base_cfg[:database]})."
+    rescue => e
+      puts "⚠️ No se pudo restaurar conexión principal automáticamente: #{e.message}"
+    end
+
+    def ensure_schema_migrations_table!(conn)
+      sm_table = "schema_migrations"
+      unless conn.table_exists?(sm_table)
+        puts "   🛠 Creando tabla #{sm_table} en tenant..."
+        # crear la tabla schema_migrations si no existe (compatible con Postgres)
+        conn.create_table(sm_table) do |t|
+          t.string :version, null: false
+        end
+        # crear índice único sobre version (compatibilidad)
+        conn.add_index(sm_table, :version, unique: true, name: "unique_schema_migrations")
+      end
+    end
+
+    def schema_migration_version_exists?(version)
+      ActiveRecord::Base.connection.execute("SELECT 1 FROM schema_migrations WHERE version = '#{version}' LIMIT 1").ntuples > 0
+    end
+
+    def insert_schema_migration_version(conn, version)
+      # Inserta con ON CONFLICT DO NOTHING (Postgres)
+      conn.execute <<~SQL
+        INSERT INTO schema_migrations (version) VALUES ('#{version}')
+        ON CONFLICT (version) DO NOTHING;
+      SQL
+    end
+
+    # Heurística simple: parsear archivos de migración en busca de create_table :name
+    def extract_tables_from_migration_file(file_path)
+      content = File.read(file_path)
+      tables = content.scan(/create_table\s+:([a-zA-Z0-9_]+)/).flatten.map(&:to_s)
+      tables.uniq
+    rescue => e
+      puts "   ⚠️ No se pudo parsear migration #{file_path}: #{e.message}"
+      []
     end
   end
 end

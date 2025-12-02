@@ -2,6 +2,9 @@
 module Tenant
   module Devise
     class PasswordsController < Devise::PasswordsController
+      layout "tenant"
+      append_view_path "app/views/tenant/devise"
+
       # GET /resource/password/new
       # def new
       #   super

@@ -1,71 +1,69 @@
 class TenantSubdomainMiddleware
+
+  NON_TENANT_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+  ].freeze
+
   def initialize(app)
     @app = app
   end
 
   def call(env)
-    request = Rack::Request.new(env)
-    subdomain = extract_subdomain(request)
+    request = ActionDispatch::Request.new(env)
+    host = request.host
 
-    if subdomain.present? && subdomain != "www"
-      account = Saas::Account.find_by(subdomain: subdomain)
-      return not_found if account.nil?
+    Rails.logger.info "🌐 Host recibido: #{host}"
 
-      db_config = account.saas_tenant_database
-      return db_not_configured if db_config.nil?
-
-      activate_tenant_connection(db_config)
-      Thread.current[:current_tenant_account] = account
-    else
-      clear_tenant_connection
+    # 🔥 1) Si el host pertenece al SaaS global → NO intentar tenant
+    if NON_TENANT_HOSTS.include?(host)
+      Rails.logger.info "🏛  Host #{host} es PRIMARIO del SaaS → no conectar tenant"
+      return @app.call(env)
     end
 
-    @app.call(env)
+    # 🔥 2) Buscar tenant por host completo
+    tenant_db = Saas::TenantDatabase.find_by(host: host)
 
+    unless tenant_db
+      Rails.logger.error "❌ No existe configuración tenant para host #{host}"
+      return not_found_response
+    end
+
+    tenant_config = {
+      adapter:  "postgresql",
+      host:     tenant_db.host,
+      port:     tenant_db.port,
+      database: tenant_db.database_name,
+      username: tenant_db.username,
+      password: tenant_db.password,
+      encoding: "unicode",
+      pool:     ENV.fetch("RAILS_MAX_THREADS", 5)
+    }.deep_symbolize_keys
+
+    Rails.logger.info "🔄 Conectando TENANT para #{host}"
+
+    ActiveRecord::Base.establish_connection(tenant_config)
+
+    result = @app.call(env)
+    result
   ensure
-    clear_tenant_connection
+    Rails.logger.info "🔙 Restaurando conexión PRIMARIA"
+    ActiveRecord::Base.establish_connection(primary_config)
   end
 
   private
 
-  def extract_subdomain(request)
-    host = request.host
-    parts = host.split(".")
-    return nil if parts.length < 3
-    parts.first
+  def primary_config
+    cfg = Rails.configuration.database_configuration[Rails.env]
+    cfg = cfg["primary"] if cfg.is_a?(Hash) && cfg.key?("primary")
+    cfg
   end
 
-  def activate_tenant_connection(db_config)
-    ActiveRecord::Base.establish_connection(
-      adapter:  "postgresql",
-      host:     db_config.host,
-      port:     db_config.port,
-      database: db_config.database_name,
-      username: db_config.username,
-      password: db_config.password,
-      encoding: "unicode",
-      pool:     5
-    )
-
-    Thread.current[:tenant_db_active] = true
-
-  end
-
-  def clear_tenant_connection
-    return unless Thread.current[:tenant_db_active]
-
-    # reconectar a la DB global (saas)
-    ActiveRecord::Base.establish_connection(:primary)
-
-    Thread.current[:tenant_db_active] = nil
-    Thread.current[:current_tenant_account] = nil
-  end
-
-  def not_found
-    [404, { "Content-Type" => "text/plain" }, ["Tenant not found"]]
-  end
-
-  def db_not_configured
-    [500, { "Content-Type" => "text/plain" }, ["Tenant database not configured"]]
+  def not_found_response
+    [
+      404,
+      { "Content-Type" => "text/html" },
+      ["Tenant host no encontrado"]
+    ]
   end
 end

@@ -14,7 +14,7 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
             <li class="nav-item"><%= link_to "Configuración", "#", class: "nav-link" %></li>
-            <li class="nav-item"><%= link_to "Usuarios", tenant_users_path, class: "nav-link" %></li>
+            <li class="nav-item"><%= link_to "Usuarios", users_path, class: "nav-link" %></li>
             <li class="nav-item">
               <%= button_to "Logout", destroy_tenant_user_session_path, method: :delete, class: "btn btn-sm btn-danger" %>
             </li>

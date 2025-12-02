@@ -74,5 +74,8 @@ Rails.application.configure do
   config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
 
   config.hosts << /.*\.?lvh\.me/
+  config.hosts << "lvh.me"
+  config.action_dispatch.tld_length = 1
+
 
 end
