@@ -1,5 +1,5 @@
 <%= form_with model: @user,
-              url: @user.new_record? ? users_path : user_path(@user),
+              url: @user.new_record? ? saas_users_path : saas_user_path(@user),
               method: @user.new_record? ? :post : :patch,
               local: true do |f| %>
   <div class="mb-3">
@@ -8,8 +8,8 @@
   </div>
 
   <div class="mb-3">
-    <%= f.label :role_id, "Rol", class: "form-label" %>
-    <%= f.collection_select :master_data_role_id, MasterData::Role.all, :id, :name,
+    <%= f.label :saas_role_id, "Rol", class: "form-label" %>
+    <%= f.collection_select :saas_role_id, Saas::Role.all, :id, :name,
           { prompt: "Selecciona un rol" },
           { class: "form-select" } %>
   </div>

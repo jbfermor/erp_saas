@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class DeviseCreateCoreUsers < ActiveRecord::Migration[8.0]
-  def change
+  def up
     create_table :core_users, id: :uuid do |t|
       ## Database authenticatable
       t.string :email,              null: false, default: ""
@@ -14,26 +14,10 @@ class DeviseCreateCoreUsers < ActiveRecord::Migration[8.0]
       ## Rememberable
       t.datetime :remember_created_at
 
-      ## Trackable
-      # t.integer  :sign_in_count, default: 0, null: false
-      # t.datetime :current_sign_in_at
-      # t.datetime :last_sign_in_at
-      # t.string   :current_sign_in_ip
-      # t.string   :last_sign_in_ip
-
-      ## Confirmable
-      # t.string   :confirmation_token
-      # t.datetime :confirmed_at
-      # t.datetime :confirmation_sent_at
-      # t.string   :unconfirmed_email # Only if using reconfirmable
-
-      ## Lockable
-      # t.integer  :failed_attempts, default: 0, null: false # Only if lock strategy is :failed_attempts
-      # t.string   :unlock_token # Only if unlock strategy is :email or :both
-      # t.datetime :locked_at
-
-      t.references :company, null: false, foreign_key: { to_table: :core_companies, on_delete: :cascade }, type: :uuid
-      t.references :entity, type: :uuid, foreign_key: { to_table: :core_entities }, index: true, null: true
+      ## Referencias SIN autoload
+      t.uuid :role_id, null: false
+      t.uuid :company_id, null: false
+      t.uuid :entity_id
 
       t.string :slug
 
@@ -42,7 +26,14 @@ class DeviseCreateCoreUsers < ActiveRecord::Migration[8.0]
 
     add_index :core_users, :email,                unique: true
     add_index :core_users, :reset_password_token, unique: true
-    # add_index :core_users, :confirmation_token,   unique: true
-    # add_index :core_users, :unlock_token,         unique: true
+
+    # Foreign keys (no autoload)
+    add_foreign_key :core_users, :master_data_roles, column: :role_id
+    add_foreign_key :core_users, :core_companies, column: :company_id, on_delete: :cascade
+    add_foreign_key :core_users, :core_entities, column: :entity_id
+  end
+
+  def down
+    drop_table :core_users, if_exists: true
   end
 end

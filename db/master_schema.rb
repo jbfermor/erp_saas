@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_02_080339) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -159,32 +159,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
     t.index ["module_id"], name: "index_core_subscriptions_on_module_id"
   end
 
-  create_table "core_user_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "user_id", null: false
-    t.uuid "role_id", null: false
-    t.uuid "company_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["company_id"], name: "index_core_user_roles_on_company_id"
-    t.index ["role_id"], name: "index_core_user_roles_on_role_id"
-    t.index ["user_id", "role_id", "company_id"], name: "index_user_roles_unique", unique: true
-    t.index ["user_id"], name: "index_core_user_roles_on_user_id"
-  end
-
   create_table "core_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
+    t.uuid "role_id", null: false
     t.uuid "company_id", null: false
     t.uuid "entity_id"
     t.string "slug"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["company_id"], name: "index_core_users_on_company_id"
     t.index ["email"], name: "index_core_users_on_email", unique: true
-    t.index ["entity_id"], name: "index_core_users_on_entity_id"
     t.index ["reset_password_token"], name: "index_core_users_on_reset_password_token", unique: true
   end
 
@@ -196,6 +183,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
     t.index ["slug"], name: "index_master_data_address_types_on_slug", unique: true
   end
 
+  create_table "master_data_company_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "company_id", null: false
+    t.uuid "plan_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "plan_id"], name: "index_master_data_company_plans_on_company_id_and_plan_id", unique: true
+    t.index ["company_id"], name: "index_master_data_company_plans_on_company_id"
+    t.index ["plan_id"], name: "index_master_data_company_plans_on_plan_id"
+  end
+
   create_table "master_data_countries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "iso_code", null: false
@@ -204,6 +201,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["iso_code"], name: "index_master_data_countries_on_iso_code", unique: true
+  end
+
+  create_table "master_data_database_configs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "company_id", null: false
+    t.string "host", null: false
+    t.integer "port", null: false
+    t.string "database_name", null: false
+    t.string "username", null: false
+    t.text "password", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_master_data_database_configs_on_company_id"
   end
 
   create_table "master_data_document_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -282,16 +291,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
     t.index ["subdomain"], name: "index_saas_accounts_on_subdomain", unique: true
   end
 
-  create_table "saas_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "name", null: false
-    t.string "key", null: false
-    t.text "description"
-    t.boolean "active", default: true
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["key"], name: "index_saas_plans_on_key", unique: true
-  end
-
   create_table "saas_roles", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -340,11 +339,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
   add_foreign_key "core_personal_infos", "master_data_document_types", column: "document_type_id"
   add_foreign_key "core_subscriptions", "core_companies", column: "company_id"
   add_foreign_key "core_subscriptions", "master_data_modules", column: "module_id"
-  add_foreign_key "core_user_roles", "core_companies", column: "company_id", on_delete: :cascade
-  add_foreign_key "core_user_roles", "core_users", column: "user_id", on_delete: :cascade
-  add_foreign_key "core_user_roles", "master_data_roles", column: "role_id", on_delete: :cascade
   add_foreign_key "core_users", "core_companies", column: "company_id", on_delete: :cascade
   add_foreign_key "core_users", "core_entities", column: "entity_id"
+  add_foreign_key "core_users", "master_data_roles", column: "role_id"
+  add_foreign_key "master_data_company_plans", "core_companies", column: "company_id"
+  add_foreign_key "master_data_company_plans", "master_data_plans", column: "plan_id"
+  add_foreign_key "master_data_database_configs", "core_companies", column: "company_id"
   add_foreign_key "master_data_plan_modules", "master_data_modules"
   add_foreign_key "master_data_plan_modules", "master_data_plans"
   add_foreign_key "saas_tenant_databases", "saas_accounts"

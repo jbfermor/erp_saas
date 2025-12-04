@@ -35,75 +35,95 @@ module Saas
 
     private
 
-    # ------------------------------------------------------------
-    # 1️⃣ Migraciones (Rails 8) - seguro: marca versiones ya aplicadas
-    # ------------------------------------------------------------
-    def migrate_schema!
-      puts "⚙️ Ejecutando migraciones para tenant #{saas_account.slug}..."
+    # -------------------------------
+# 1️⃣ Migraciones (Rails 8) - seguro: marca versiones ya aplicadas
+# -------------------------------
+def migrate_schema!
+  puts "⚙️ Ejecutando migraciones para tenant #{saas_account.slug}..."
 
-      # Conectamos al tenant (debe existir la DB ya)
-      ActiveRecord::Base.establish_connection(tenant_database_data)
-      conn = ActiveRecord::Base.connection
+  # Conectamos al tenant (debe existir la DB ya)
+  ActiveRecord::Base.establish_connection(tenant_database_data)
+  conn = ActiveRecord::Base.connection
 
-      migration_paths = [
-        Rails.root.join("db/tenants/core").to_s,
-        Rails.root.join("db/tenants/master_data").to_s,
-        Rails.root.join("db/tenants/modules").to_s
-      ].freeze
+  migration_paths = [
+    Rails.root.join("db/tenants/master_data").to_s,
+    Rails.root.join("db/tenants/core").to_s,
+    Rails.root.join("db/tenants/modules").to_s
+  ].freeze
 
-      # Debug: listar archivos detectados
-      migration_paths.each do |path|
-        if Dir.exist?(path)
-          puts "Migraciones en #{path}:"
-          Dir["#{path}/*.rb"].sort.each { |f| puts " - #{File.basename(f)}" }
-        else
-          puts "Ruta de migraciones no existe (se ignora): #{path}"
-        end
-      end
+  # Debug: listar archivos detectados
+  migration_paths.each do |path|
+    if Dir.exist?(path)
+      puts "Migraciones en #{path}:"
+      Dir["#{path}/*.rb"].sort.each { |f| puts " - #{File.basename(f)}" }
+    else
+      puts "Ruta de migraciones no existe (se ignora): #{path}"
+    end
+  end
 
-      # Asegurar schema_migrations en tenant
-      ensure_schema_migrations_table!(conn)
+  # Asegurar schema_migrations en tenant
+  ensure_schema_migrations_table!(conn)
 
-      # Por cada path: marcar versiones cuyos objetos ya existan para evitar duplicados
-      migration_paths.each do |path|
-        next unless Dir.exist?(path)
+  # -------------------------------------------------
+  # PERFIL DE SEGURIDAD: comprobar tablas preexistentes
+  # -------------------------------------------------
+  existing = conn.tables - ["schema_migrations", "ar_internal_metadata"]
+  if existing.any?
+    puts "⚠️ Advertencia: se han detectado tablas preexistentes en la BD del tenant: #{existing.join(', ')}"
 
-        # cargar versiones desde filenames (prefijo_timestamp)
-        Dir["#{path}/*.rb"].sort.each do |file|
-          version = File.basename(file).split("_").first
-          next if version.blank?
+    # En production: abortamos (no tocamos DB automaticamente)
+    if Rails.env.production?
+      raise "Abortando migraciones del tenant #{saas_account.slug}: existen tablas preexistentes (#{existing.join(', ')}). Revisa seeds/migrators."
+    end
 
-          # Determinar tablas creadas por la migración (heurística)
-          tables = extract_tables_from_migration_file(file)
-
-          # Si la migración aparentemente crea tablas y todas están ya presentes → marcar versión aplicada
-          if tables.present?
-            if tables.all? { |t| conn.table_exists?(t) }
-              unless schema_migration_version_exists?(version)
-                puts "   ✔ Marcando como aplicada la migración #{version} (tablas ya existen: #{tables.join(", ")})"
-                insert_schema_migration_version(conn, version)
-              end
-            end
+    # En development/test: opción de limpieza automática (segura para dev)
+    if Rails.env.development?
+      # Si quieres autolimpiar sin preguntar (útil en CI/dev), cambia a true
+      auto_clean = ENV['TENANT_AUTO_CLEAN'] == '1'
+      if auto_clean
+        puts "🧹 Auto-limpieza activada por TENANT_AUTO_CLEAN=1 — eliminando tablas existentes..."
+        existing.each do |t|
+          begin
+            conn.drop_table(t, if_exists: true, force: :cascade)
+            puts "   - tabla #{t} eliminada"
+          rescue => e
+            puts "   ! error al eliminar #{t}: #{e.message}"
+            raise
           end
         end
+        Rails.logger.info "🧨 Reiniciando schema tras clean..."
+
+        ActiveRecord::Base.connection.execute("DROP SCHEMA public CASCADE;")
+        ActiveRecord::Base.connection.execute("CREATE SCHEMA public;")
+
+        Rails.logger.info "🧨 Schema reiniciado. Migraciones se ejecutarán desde cero."
+      else
+        raise "La BD tenant no está vacía. Si quieres forzar limpieza en dev exporta TENANT_AUTO_CLEAN=1 y reejecuta. Tablas detectadas: #{existing.join(', ')}"
       end
-
-      # Finalmente ejecutar migraciones pendientes (Rails 8)
-      # MigrationContext accepts array of paths (Rails 8+)
-      context = ActiveRecord::MigrationContext.new(migration_paths)
-      context.migrate
-
-      puts "✅ Migraciones completadas para tenant #{saas_account.slug}."
     end
+  end
+
+  # Finalmente ejecutar migraciones pendientes (Rails 8)
+  context = ActiveRecord::MigrationContext.new(migration_paths)
+  context.migrate
+
+  puts "✅ Migraciones completadas para tenant #{saas_account.slug}."
+end
 
     # ------------------------------------------------------------
     # 2️⃣ Cambiar conexión para seeds (se asume que la DB tenant existe)
     # ------------------------------------------------------------
     def switch_to_tenant_connection!
       puts "🔌 Cambiando conexión al tenant..."
+
+      ActiveRecord::Base.connection_handler.clear_all_connections!
+
       ActiveRecord::Base.establish_connection(tenant_database_data)
-      puts "🔌 Conectado a la base de datos tenant."
+
+      # Verificación REAL (clave)
+      puts "   🗄  Base actual: #{ActiveRecord::Base.connection.current_database}"
     end
+
 
     # ------------------------------------------------------------
     # 3️⃣ Seeds master_data internos
@@ -138,6 +158,7 @@ module Saas
       )
 
       user = Core::User.find_or_create_by!(email: owner_email) do |u|
+        u.role = MasterData::Role.find_by!(slug: "owner")
         u.entity = entity
         u.company = company
         u.email = owner_email
@@ -147,11 +168,7 @@ module Saas
 
       puts "🧑‍💼 Usuario principal creado/recuperado: #{user.email}"
 
-      owner_role = MasterData::Role.find_by!(name: "Owner")
-      unless Core::UserRole.exists?(user: user, role: owner_role, company: company)
-        Core::UserRole.create!(user: user, role: owner_role, company: company)
-        puts "🔐 Rol Owner asignado a #{user.email}"
-      end
+      puts "🔐 Rol Owner asignado a #{user.email}"
 
       # Crear usuario sistema
       create_system_user(company)
@@ -181,16 +198,12 @@ module Saas
       )
 
       user = Core::User.find_or_create_by!(email: "system@saas.com") do |u|
+        u.role = MasterData::Role.find_by!(slug: "saas_admin")
         u.email = "system@saas.com"
         u.password = "systempassword"
         u.password_confirmation = "systempassword"
         u.company = company
         u.entity = entity
-      end
-
-      system_role = MasterData::Role.find_by!(name: "Owner")
-      unless Core::UserRole.exists?(user: user, role: system_role, company: company)
-        Core::UserRole.create!(user: user, role: system_role, company: company)
       end
 
       puts "🤖 Usuario sistema creado/recuperado: #{user.email}"

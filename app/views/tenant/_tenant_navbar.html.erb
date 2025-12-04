@@ -3,7 +3,7 @@
     <span class= "navbar-text text-white">  
       <a class="navbar-brand" href="<%= root_path if tenant_user_signed_in? %>">ERP SaaS</a>
       <% if tenant_user_signed_in? %>
-      <%= current_tenant_user.company.name %> | <%= current_tenant_user.email %> | <%= current_tenant_user.user_roles.find_by(company: current_tenant_user.company).role.name %>
+      <%= current_tenant_user.company.name %> | <%= current_tenant_user.email %> | <%= current_tenant_user.role.name %>
       <% end %>
     </span>
     <% if tenant_user_signed_in? %>
