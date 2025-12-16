@@ -1,6 +1,6 @@
 <div class="container my-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Usuarios de <%= current_tenant_user.company %></h1>
+    <h1>Usuarios de <%= Core::Company.find(current_tenant_user.company.id).name %></h1>
     <%= link_to "Nuevo usuario", new_user_path, class: "btn btn-primary" %>
   </div>
 

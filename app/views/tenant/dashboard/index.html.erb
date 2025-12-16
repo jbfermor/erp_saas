@@ -1,4 +1,4 @@
-<h1 class="mb-4">Panel del Tenant</h1>
+<h1 class="mb-4">Panel de <%= Core::Company.find(current_tenant_user.company.id).name %></h1>
 
 <div class="row">
   <div class="col-md-4">

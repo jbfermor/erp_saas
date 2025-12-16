@@ -15,6 +15,9 @@ module Core
 
     has_one :plan,
             through: :current_company_plan
+
+    has_one :business_info, class_name: "Core::BusinessInfo", dependent: :destroy
+    has_one :bank_info, class_name: "Core::BankInfo", dependent: :destroy
     
     has_one :database_config, class_name: "MasterData::DatabaseConfig", dependent: :destroy
 

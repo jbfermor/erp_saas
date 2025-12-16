@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  namespace :tenant do
+    get "company_configuration/index"
+  end
 
   # ============================================================
   # SaaS global (sin subdominio)
@@ -38,6 +41,11 @@ Rails.application.routes.draw do
     scope module: :tenant do
       root to: "dashboard#index", as: :tenant_root
       resources :users
+      get 'company_configuration', to: 'company_configuration#index', as: 'company_configuration'
+      resources :entities do
+        resource :business_info, only: [:new, :create, :edit, :update]
+        resource :bank_info, only: [:new, :create, :edit, :update]
+      end
     end
   end
 

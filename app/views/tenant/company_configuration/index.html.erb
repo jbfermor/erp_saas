@@ -1,0 +1,42 @@
+  <h1 class="text-2xl font-bold mb-4">Configuración de la Compañía</h1>
+
+  <%# === BUSINESS INFO === %>
+  <div class="card shadow rounded">
+    <div class="card-header d-flex justify-content-between p-3">
+      <h2>Información Comercial </h2>
+      <% if @company_entity.business_info.nil? %>
+        <%= link_to "Añadir información de la empresa",
+          new_entity_business_info_path(@company_entity),
+          class: "btn btn-primary" %>
+      <% else %>
+        <%= link_to "Editar", edit_entity_business_info_path(@company_entity.business_info),
+          class: "bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded" %>
+      <% end %>
+    </div>
+    <div class="card-body">
+      <% if @company_entity.business_info.nil? %>
+        <p class="text-gray-500 italic">No existe información comercial registrada.</p>
+      <% else %>
+        <div class="mt-2 space-y-2">
+          <p><strong>Nombre legal:</strong> <%= @company_entity.business_info.legal_name %></p>
+          <p><strong>CIF/NIF:</strong> <%= @company_entity.business_info.tax_id %></p>
+          <p><strong>Actividad:</strong> <%= @company_entity.business_info.activity %></p>
+          <p><strong>Teléfono:</strong> <%= @company_entity.business_info.phone %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card shadow rounded mt-4">
+    <div class="card-header d-flex justify-content-between p-3">
+      <h2>Información Bancaria</h2>
+      <%= link_to "Añadir información bancaria", new_entity_bank_info_path(entity_id: @company_entity), class: "btn btn-primary" %>
+    </div>
+    <div class="card-body">
+      <% if @company_entity.bank_infos.empty? %>
+        <%= render "bank_info_table" %>
+      <% else %>
+        <p class="text-gray-500 italic">No hay información bancaria registrada.</p>
+      <% end %>
+    </div>
+  </div>

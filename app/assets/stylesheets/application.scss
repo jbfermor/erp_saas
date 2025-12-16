@@ -1,0 +1,32 @@
+@import "bootstrap/scss/bootstrap";
+@import "bootstrap-icons/font/bootstrap-icons";
+
+/* TABLE DEFAULTS */
+.table {
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+}
+
+/* Forzar estilo de TH */
+.table > :not(caption) > * > th {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+/* CARD DEFAULTS */
+.card {
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+  border-radius: .5rem;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  transition: 0.2s ease;
+  box-shadow: 0 0.75rem 1rem rgba(0,0,0,0.15);
+}
+
+/* NAVBAR DEFAULTS */
+.navbar {
+  @extend .navbar-dark;
+  @extend .navbar-expand-lg;
+  @extend .bg-dark;
+}

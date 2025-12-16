@@ -9,7 +9,7 @@ module Core
     validates :email, presence: true, uniqueness: true
 
     scope :non_system, -> {
-      where.not(role: MasterData::Role.find_by(slug: "system")&.id)
+      where.not(role: MasterData::Role.find_by(slug: "saas_admin")&.id)
     }
 
     

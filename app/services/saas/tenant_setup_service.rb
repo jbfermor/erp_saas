@@ -152,14 +152,19 @@ end
       end
       puts "🏢 Company creada: #{company.name}"
 
-      entity = Core::Entity.create!(
+      company_entity = Core::Entity.create!( 
+        company: company,
+        entity_type: MasterData::EntityType.find_by!(slug: "system")
+      )
+
+      user_entity = Core::Entity.create!(
         company: company,
         entity_type: MasterData::EntityType.find_by!(slug: "individual")
       )
 
       user = Core::User.find_or_create_by!(email: owner_email) do |u|
         u.role = MasterData::Role.find_by!(slug: "owner")
-        u.entity = entity
+        u.entity = user_entity
         u.company = company
         u.email = owner_email
         u.password = owner_password

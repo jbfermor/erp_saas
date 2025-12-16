@@ -2,7 +2,7 @@ puts "🌍 Cargando tipos de idendidad..."
 
 entity_type_data = [
   { name: "Persona fisica", slug: "individual" },
-  { name: "Persona jurídica", slug: "bussiness" },
+  { name: "Persona jurídica", slug: "business" },
   { name: "Sistema", slug: "system" },
 ]
 
