@@ -44,7 +44,8 @@ Rails.application.routes.draw do
       get 'company_configuration', to: 'company_configuration#index', as: 'company_configuration'
       resources :entities do
         resource :business_info, only: [:new, :create, :edit, :update]
-        resource :bank_info, only: [:new, :create, :edit, :update]
+        resource :bank_infos, only: [:new, :create, :edit, :update, :destroy]
+        resource :address, controller: 'entity_addresses', only: [:new, :create, :edit, :update, :destroy]
       end
     end
   end

@@ -1,8 +1,4 @@
-# == Schema Information
-# Table name: core_entities
-#  entity_type_id :integer
-#  company_id     :integer
-#
+# app/models/core/entity.rb
 module Core
   class Entity < ApplicationRecord
     belongs_to :entity_type, class_name: "MasterData::EntityType"
@@ -13,5 +9,14 @@ module Core
     has_many :addresses, as: :addressable, class_name: "Core::Address", dependent: :destroy
     has_many :bank_infos, class_name: "Core::BankInfo", dependent: :destroy
 
+    # 🆕 AÑADIR: Obtener la dirección de trabajo
+    def work_address
+      addresses.joins(:address_type).find_by(master_data_address_types: { slug: 'work' })
+    end
+
+    # 🆕 AÑADIR: Verificar si tiene dirección de trabajo
+    def work_address?
+      work_address.present?
+    end
   end
 end

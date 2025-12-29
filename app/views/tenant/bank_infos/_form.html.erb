@@ -1,0 +1,55 @@
+<%= form_with model: @bank_info, url: entity_bank_infos_path, local: true do |f| %>
+
+  <% if @bank_info.errors.any? %>
+    <div class="alert alert-danger">
+      <h6>Errores al guardar:</h6>
+      <ul class="mb-0">
+        <% @bank_info.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="card mb-3">
+    <div class="card-header">
+      <strong>Datos bancarios</strong>
+    </div>
+
+    <div class="card-body">
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= f.label :bank_name, "Banco", class: "form-label" %>
+          <%= f.text_field :bank_name, class: "form-control", required: true %>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <%= f.label :iban, "IBAN", class: "form-label" %>
+          <%= f.text_field :iban, class: "form-control", required: true %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <%= f.label :swift, "SWIFT / BIC", class: "form-label" %>
+          <%= f.text_field :swift, class: "form-control" %>
+        </div>
+
+        <div class="col-md-6 mb-3 d-flex align-items-center">
+          <div class="form-check mt-4">
+            <%= f.check_box :is_default, class: "form-check-input" %>
+            <%= f.label :is_default, "Cuenta bancaria por defecto", class: "form-check-label" %>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2">
+    <%= link_to "Cancelar", company_configuration_path, class: "btn btn-outline-secondary" %>
+    <%= f.submit class: "btn btn-primary" %>
+  </div>
+
+<% end %>

@@ -15,17 +15,16 @@
         <td><%= bank_info.bank_name %></td>
         <td><%= bank_info.iban %></td>
         <td><%= bank_info.swift %></td>
-        <td><%= bank info.is_default %></td>
+        <td><%= bank_info.is_default %></td>
         <td>
-          <%= link_to "Editar", edit_entity_bank_info_path(@company_entity, bank_info), class: "btn btn-sm btn-warning"%>
-          <%= link_to "Eliminar", entity_bank_infos_path(@company_entity, bank_info), method: :delete, class: "btn btn-sm btn-danger"%>
+          <%= button_to "Eliminar", entity_bank_infos_path(@entity, bank_info.id), method: :delete, class: "btn btn-sm btn-danger"%>
         </td>
       </tr>
     <% end %>
   <% else %>
     <tr>
       <td colspan="5" class="text-center">
-        <%= link_to "Añadir información bancaria", new_entity_bank_info_path(entity_id: @company_entity.id),
+        <%= link_to "Añadir información bancaria", new_entity_bank_info_path(entity_id: @entity.id),
           class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded" %>
         <p class="text-gray-500 italic">No hay información bancaria registrada.</p>
       </td>
