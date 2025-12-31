@@ -1,6 +1,7 @@
 # app/models/core/address.rb
-module Core
+module Contact
   class Address < ApplicationRecord
+
     belongs_to :addressable, polymorphic: true, inverse_of: :addresses
     belongs_to :address_type, class_name: "MasterData::AddressType"
     belongs_to :country, class_name: "MasterData::Country"

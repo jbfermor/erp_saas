@@ -1,5 +1,5 @@
 
-module Core
+module Contact
   class BankInfo < ApplicationRecord
     belongs_to :entity, class_name: "Core::Entity"
 

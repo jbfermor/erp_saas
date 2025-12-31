@@ -26,7 +26,7 @@ namespace :db do
         Rails.root.join("db/migrate").to_s,
         Rails.root.join("db/tenants/core").to_s,
         Rails.root.join("db/tenants/master_data").to_s,
-        Rails.root.join("db/tenants/modules").to_s
+        Rails.root.join("db/tenants/contact").to_s
       ]
 
       context = ActiveRecord::MigrationContext.new(migration_paths)

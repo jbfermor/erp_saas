@@ -1,9 +1,6 @@
 class MasterData::PlanBootstrapService
 
-  attr_reader :company
-
-  def initialize(company)
-    @company = company
+  def initialize
   end
 
   def call

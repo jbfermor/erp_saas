@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_30_142223) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -61,6 +61,253 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "contact_addresses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "addressable_type", null: false
+    t.bigint "addressable_id", null: false
+    t.uuid "address_type_id", null: false
+    t.uuid "country_id", null: false
+    t.string "street"
+    t.string "city"
+    t.string "postal_code"
+    t.string "province"
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["address_type_id"], name: "index_contact_addresses_on_address_type_id"
+    t.index ["addressable_type", "addressable_id"], name: "index_contact_addresses_on_addressable"
+    t.index ["country_id"], name: "index_contact_addresses_on_country_id"
+    t.index ["slug"], name: "index_contact_addresses_on_slug", unique: true
+  end
+
+  create_table "contact_bank_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "entity_id", null: false
+    t.string "bank_name"
+    t.string "iban"
+    t.string "swift"
+    t.boolean "is_default"
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id"], name: "index_contact_bank_infos_on_entity_id"
+    t.index ["slug"], name: "index_contact_bank_infos_on_slug", unique: true
+  end
+
+  create_table "contact_business_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "entity_id", null: false
+    t.string "slug", null: false
+    t.string "business_name"
+    t.string "trade_name"
+    t.string "registration_number"
+    t.string "phone"
+    t.string "email"
+    t.string "website"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id"], name: "index_contact_business_infos_on_entity_id"
+    t.index ["slug"], name: "index_contact_business_infos_on_slug", unique: true
+  end
+
+  create_table "contact_entity_role_assignments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "entity_id", null: false
+    t.uuid "entity_role_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id"], name: "index_contact_entity_role_assignments_on_entity_id"
+    t.index ["entity_role_id"], name: "index_contact_entity_role_assignments_on_entity_role_id"
+  end
+
+  create_table "contact_entity_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "slug"
+    t.boolean "system", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "contact_personal_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "entity_id", null: false
+    t.uuid "document_type_id"
+    t.string "name"
+    t.string "surnames"
+    t.string "document_number"
+    t.date "birth_date"
+    t.string "phone"
+    t.string "personal_email"
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_type_id"], name: "index_contact_personal_infos_on_document_type_id"
+    t.index ["entity_id"], name: "index_contact_personal_infos_on_entity_id"
+    t.index ["slug"], name: "index_contact_personal_infos_on_slug", unique: true
+  end
+
+  create_table "core_companies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.uuid "saas_account_id", null: false
+    t.string "created_by"
+    t.string "updated_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_core_companies_on_slug", unique: true
+  end
+
+  create_table "core_company_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "company_id", null: false
+    t.uuid "plan_id", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "plan_id"], name: "index_core_company_plans_on_company_id_and_plan_id", unique: true
+    t.index ["company_id"], name: "index_core_company_plans_on_company_id"
+    t.index ["plan_id"], name: "index_core_company_plans_on_plan_id"
+  end
+
+  create_table "core_entities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "entity_type_id", null: false
+    t.uuid "company_id", null: false
+    t.uuid "parent_entity_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_core_entities_on_company_id"
+    t.index ["entity_type_id"], name: "index_core_entities_on_entity_type_id"
+    t.index ["parent_entity_id"], name: "index_core_entities_on_parent_entity_id"
+  end
+
+  create_table "core_subscriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "company_id", null: false
+    t.uuid "module_id", null: false
+    t.datetime "starts_at"
+    t.datetime "ends_at"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_core_subscriptions_on_company_id"
+    t.index ["module_id"], name: "index_core_subscriptions_on_module_id"
+  end
+
+  create_table "core_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "email", default: "", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.string "reset_password_token"
+    t.datetime "reset_password_sent_at"
+    t.datetime "remember_created_at"
+    t.uuid "role_id", null: false
+    t.uuid "company_id", null: false
+    t.uuid "entity_id"
+    t.string "slug"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_core_users_on_email", unique: true
+    t.index ["reset_password_token"], name: "index_core_users_on_reset_password_token", unique: true
+  end
+
+  create_table "master_data_address_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_master_data_address_types_on_slug", unique: true
+  end
+
+  create_table "master_data_company_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "company_id", null: false
+    t.uuid "plan_id", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "plan_id"], name: "index_master_data_company_plans_on_company_id_and_plan_id", unique: true
+    t.index ["company_id"], name: "index_master_data_company_plans_on_company_id"
+    t.index ["plan_id"], name: "index_master_data_company_plans_on_plan_id"
+  end
+
+  create_table "master_data_countries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "iso_code", null: false
+    t.string "phone_prefix", null: false
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["iso_code"], name: "index_master_data_countries_on_iso_code", unique: true
+  end
+
+  create_table "master_data_database_configs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "company_id", null: false
+    t.string "host", null: false
+    t.integer "port", null: false
+    t.string "database_name", null: false
+    t.string "username", null: false
+    t.text "password", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_master_data_database_configs_on_company_id"
+  end
+
+  create_table "master_data_document_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.boolean "system"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_master_data_document_types_on_slug", unique: true
+  end
+
+  create_table "master_data_entity_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_master_data_entity_types_on_slug", unique: true
+  end
+
+  create_table "master_data_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_master_data_modules_on_slug", unique: true
+  end
+
+  create_table "master_data_plan_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "master_data_plan_id", null: false
+    t.uuid "master_data_module_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["master_data_module_id"], name: "index_master_data_plan_modules_on_master_data_module_id"
+    t.index ["master_data_plan_id", "master_data_module_id"], name: "idx_on_master_data_plan_id_master_data_module_id_2c675440c5", unique: true
+    t.index ["master_data_plan_id"], name: "index_master_data_plan_modules_on_master_data_plan_id"
+  end
+
+  create_table "master_data_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "master_data_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.string "scope", null: false
+    t.integer "position", default: 5, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["scope"], name: "index_master_data_roles_on_scope"
+  end
+
+  create_table "master_data_tax_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.boolean "system"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_master_data_tax_types_on_slug", unique: true
+  end
+
   create_table "saas_accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "slug", null: false
@@ -109,6 +356,29 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_171350) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "contact_addresses", "master_data_address_types", column: "address_type_id"
+  add_foreign_key "contact_addresses", "master_data_countries", column: "country_id"
+  add_foreign_key "contact_bank_infos", "core_entities", column: "entity_id"
+  add_foreign_key "contact_business_infos", "core_entities", column: "entity_id"
+  add_foreign_key "contact_entity_role_assignments", "contact_entity_roles", column: "entity_role_id"
+  add_foreign_key "contact_entity_role_assignments", "core_entities", column: "entity_id"
+  add_foreign_key "contact_personal_infos", "core_entities", column: "entity_id"
+  add_foreign_key "contact_personal_infos", "master_data_document_types", column: "document_type_id"
+  add_foreign_key "core_company_plans", "core_companies", column: "company_id"
+  add_foreign_key "core_company_plans", "master_data_plans", column: "plan_id"
+  add_foreign_key "core_entities", "core_companies", column: "company_id"
+  add_foreign_key "core_entities", "core_entities", column: "parent_entity_id"
+  add_foreign_key "core_entities", "master_data_entity_types", column: "entity_type_id"
+  add_foreign_key "core_subscriptions", "core_companies", column: "company_id"
+  add_foreign_key "core_subscriptions", "master_data_modules", column: "module_id"
+  add_foreign_key "core_users", "core_companies", column: "company_id", on_delete: :cascade
+  add_foreign_key "core_users", "core_entities", column: "entity_id"
+  add_foreign_key "core_users", "master_data_roles", column: "role_id"
+  add_foreign_key "master_data_company_plans", "core_companies", column: "company_id"
+  add_foreign_key "master_data_company_plans", "master_data_plans", column: "plan_id"
+  add_foreign_key "master_data_database_configs", "core_companies", column: "company_id"
+  add_foreign_key "master_data_plan_modules", "master_data_modules"
+  add_foreign_key "master_data_plan_modules", "master_data_plans"
   add_foreign_key "saas_tenant_databases", "saas_accounts"
   add_foreign_key "saas_users", "saas_roles"
 end

@@ -1,9 +1,8 @@
 module MasterData
   class PlanModule < ApplicationRecord
-    self.table_name = "master_data_plan_modules"
 
-    belongs_to :master_data_plan, class_name: "MasterData::Plan", foreign_key: :master_data_plan_id
-    belongs_to :master_data_module, class_name: "MasterData::Module", foreign_key: :master_data_module_id
+    belongs_to :plan, class_name: "MasterData::Plan", foreign_key: :master_data_plan_id
+    belongs_to :module, class_name: "MasterData::Module", foreign_key: :master_data_module_id
 
     validates :master_data_plan_id, uniqueness: { scope: :master_data_module_id }
 

@@ -6,7 +6,5 @@ class CreateMasterDataPlanModules < ActiveRecord::Migration[7.2]
 
       t.timestamps
     end
-
-    add_index :master_data_plan_modules, [:master_data_plan_id, :master_data_module_id], unique: true
   end
 end

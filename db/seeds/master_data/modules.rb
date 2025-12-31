@@ -11,4 +11,4 @@ module_data.each do |m_attrs|
   end
 end
 
-puts "Se han creado los módulos: #{MasterData::EntityType.pluck(:name).join(', ')}"
+puts "Se han creado los módulos: #{MasterData::Module.pluck(:name).join(', ')}"

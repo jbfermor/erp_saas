@@ -107,9 +107,6 @@ company = mother_account.setup_tenant!(
   owner_password: "changeme"
 )
 
-plan = MasterData::PlanBootstrapService.new(company).call
-Tenant::SubscriptionSetupService.new(company, plan).call
-
 puts "🎉 Tenant master listo."
 
 # ---------------------------------------------------------

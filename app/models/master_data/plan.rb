@@ -1,19 +1,20 @@
 module MasterData
   class Plan < ApplicationRecord
-    
-    self.table_name = "master_data_plans"
     has_many :plan_modules,
             class_name: "MasterData::PlanModule",
             foreign_key: :master_data_plan_id,
             dependent: :destroy
 
-    has_many :master_data_modules,
-           through: :plan_modules
+    has_many :modules,
+           through: :plan_modules, class_name: "MasterData::Module"
 
     has_many :company_plans,
          class_name: "MasterData::CompanyPlan",
          foreign_key: :master_data_plan_id,
          dependent: :restrict_with_error
+    
+    has_many :companies,
+         through: :company_plans, class_name: "Core::Company"
 
     validates :name, :slug, presence: true
 

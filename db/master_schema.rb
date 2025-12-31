@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_02_080339) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_30_142223) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -61,7 +61,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_080339) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "core_addresses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "contact_addresses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "addressable_type", null: false
     t.bigint "addressable_id", null: false
     t.uuid "address_type_id", null: false
@@ -73,13 +73,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_080339) do
     t.string "slug", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["address_type_id"], name: "index_core_addresses_on_address_type_id"
-    t.index ["addressable_type", "addressable_id"], name: "index_core_addresses_on_addressable"
-    t.index ["country_id"], name: "index_core_addresses_on_country_id"
-    t.index ["slug"], name: "index_core_addresses_on_slug", unique: true
+    t.index ["address_type_id"], name: "index_contact_addresses_on_address_type_id"
+    t.index ["addressable_type", "addressable_id"], name: "index_contact_addresses_on_addressable"
+    t.index ["country_id"], name: "index_contact_addresses_on_country_id"
+    t.index ["slug"], name: "index_contact_addresses_on_slug", unique: true
   end
 
-  create_table "core_bank_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "contact_bank_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "entity_id", null: false
     t.string "bank_name"
     t.string "iban"
@@ -88,26 +88,57 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_080339) do
     t.string "slug", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["entity_id"], name: "index_core_bank_infos_on_entity_id"
-    t.index ["slug"], name: "index_core_bank_infos_on_slug", unique: true
+    t.index ["entity_id"], name: "index_contact_bank_infos_on_entity_id"
+    t.index ["slug"], name: "index_contact_bank_infos_on_slug", unique: true
   end
 
-  create_table "core_business_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "contact_business_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "entity_id", null: false
-    t.uuid "tax_type_id", null: false
     t.string "slug", null: false
     t.string "business_name"
     t.string "trade_name"
-    t.string "tax_id"
     t.string "registration_number"
     t.string "phone"
     t.string "email"
     t.string "website"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["entity_id"], name: "index_core_business_infos_on_entity_id"
-    t.index ["slug"], name: "index_core_business_infos_on_slug", unique: true
-    t.index ["tax_type_id"], name: "index_core_business_infos_on_tax_type_id"
+    t.index ["entity_id"], name: "index_contact_business_infos_on_entity_id"
+    t.index ["slug"], name: "index_contact_business_infos_on_slug", unique: true
+  end
+
+  create_table "contact_entity_role_assignments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "entity_id", null: false
+    t.uuid "entity_role_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id"], name: "index_contact_entity_role_assignments_on_entity_id"
+    t.index ["entity_role_id"], name: "index_contact_entity_role_assignments_on_entity_role_id"
+  end
+
+  create_table "contact_entity_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "slug"
+    t.boolean "system", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "contact_personal_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "entity_id", null: false
+    t.uuid "document_type_id"
+    t.string "name"
+    t.string "surnames"
+    t.string "document_number"
+    t.date "birth_date"
+    t.string "phone"
+    t.string "personal_email"
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_type_id"], name: "index_contact_personal_infos_on_document_type_id"
+    t.index ["entity_id"], name: "index_contact_personal_infos_on_entity_id"
+    t.index ["slug"], name: "index_contact_personal_infos_on_slug", unique: true
   end
 
   create_table "core_companies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -121,30 +152,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_080339) do
     t.index ["slug"], name: "index_core_companies_on_slug", unique: true
   end
 
+  create_table "core_company_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "company_id", null: false
+    t.uuid "plan_id", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_core_company_plans_on_company_id"
+    t.index ["plan_id"], name: "index_core_company_plans_on_plan_id"
+  end
+
   create_table "core_entities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "entity_type_id", null: false
     t.uuid "company_id", null: false
+    t.uuid "parent_entity_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["company_id"], name: "index_core_entities_on_company_id"
     t.index ["entity_type_id"], name: "index_core_entities_on_entity_type_id"
-  end
-
-  create_table "core_personal_infos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "entity_id", null: false
-    t.uuid "document_type_id"
-    t.string "first_name"
-    t.string "last_name"
-    t.string "document_number"
-    t.date "birth_date"
-    t.string "phone"
-    t.string "personal_email"
-    t.string "slug", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["document_type_id"], name: "index_core_personal_infos_on_document_type_id"
-    t.index ["entity_id"], name: "index_core_personal_infos_on_entity_id"
-    t.index ["slug"], name: "index_core_personal_infos_on_slug", unique: true
+    t.index ["parent_entity_id"], name: "index_core_entities_on_parent_entity_id"
   end
 
   create_table "core_subscriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -181,16 +207,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_080339) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_master_data_address_types_on_slug", unique: true
-  end
-
-  create_table "master_data_company_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "company_id", null: false
-    t.uuid "plan_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["company_id", "plan_id"], name: "index_master_data_company_plans_on_company_id_and_plan_id", unique: true
-    t.index ["company_id"], name: "index_master_data_company_plans_on_company_id"
-    t.index ["plan_id"], name: "index_master_data_company_plans_on_plan_id"
   end
 
   create_table "master_data_countries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -247,7 +263,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_080339) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["master_data_module_id"], name: "index_master_data_plan_modules_on_master_data_module_id"
-    t.index ["master_data_plan_id", "master_data_module_id"], name: "idx_on_master_data_plan_id_master_data_module_id_2c675440c5", unique: true
     t.index ["master_data_plan_id"], name: "index_master_data_plan_modules_on_master_data_plan_id"
   end
 
@@ -328,22 +343,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_02_080339) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "core_addresses", "master_data_address_types", column: "address_type_id"
-  add_foreign_key "core_addresses", "master_data_countries", column: "country_id"
-  add_foreign_key "core_bank_infos", "core_entities", column: "entity_id"
-  add_foreign_key "core_business_infos", "core_entities", column: "entity_id"
-  add_foreign_key "core_business_infos", "master_data_tax_types", column: "tax_type_id"
+  add_foreign_key "contact_addresses", "master_data_address_types", column: "address_type_id"
+  add_foreign_key "contact_addresses", "master_data_countries", column: "country_id"
+  add_foreign_key "contact_bank_infos", "core_entities", column: "entity_id"
+  add_foreign_key "contact_business_infos", "core_entities", column: "entity_id"
+  add_foreign_key "contact_entity_role_assignments", "contact_entity_roles", column: "entity_role_id"
+  add_foreign_key "contact_entity_role_assignments", "core_entities", column: "entity_id"
+  add_foreign_key "contact_personal_infos", "core_entities", column: "entity_id"
+  add_foreign_key "contact_personal_infos", "master_data_document_types", column: "document_type_id"
+  add_foreign_key "core_company_plans", "core_companies", column: "company_id"
+  add_foreign_key "core_company_plans", "master_data_plans", column: "plan_id"
   add_foreign_key "core_entities", "core_companies", column: "company_id"
+  add_foreign_key "core_entities", "core_entities", column: "parent_entity_id"
   add_foreign_key "core_entities", "master_data_entity_types", column: "entity_type_id"
-  add_foreign_key "core_personal_infos", "core_entities", column: "entity_id"
-  add_foreign_key "core_personal_infos", "master_data_document_types", column: "document_type_id"
   add_foreign_key "core_subscriptions", "core_companies", column: "company_id"
   add_foreign_key "core_subscriptions", "master_data_modules", column: "module_id"
   add_foreign_key "core_users", "core_companies", column: "company_id", on_delete: :cascade
   add_foreign_key "core_users", "core_entities", column: "entity_id"
   add_foreign_key "core_users", "master_data_roles", column: "role_id"
-  add_foreign_key "master_data_company_plans", "core_companies", column: "company_id"
-  add_foreign_key "master_data_company_plans", "master_data_plans", column: "plan_id"
   add_foreign_key "master_data_database_configs", "core_companies", column: "company_id"
   add_foreign_key "master_data_plan_modules", "master_data_modules"
   add_foreign_key "master_data_plan_modules", "master_data_plans"
