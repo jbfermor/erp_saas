@@ -1,0 +1,13 @@
+<div class="mb-3">
+  <span class="me-2 text-muted">Filtrar por rol:</span>
+
+  <%= link_to "Todos",
+        contacts_path,
+        class: "badge rounded-pill me-1 #{params[:role].blank? ? 'bg-primary' : 'bg-secondary'}" %>
+
+  <% @roles.each do |role| %>
+    <%= link_to role.name,
+          contacts_path(role: role.id),
+          class: "badge rounded-pill me-1 #{params[:role].to_s == role.id.to_s ? 'bg-primary' : 'bg-secondary'}" %>
+  <% end %>
+</div>

@@ -1,0 +1,52 @@
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Roles activos</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% @entities.each do |entity| %>
+          <tr>
+            <td>
+              <strong>
+                <%= entity_display_name(entity) %>
+              </strong>
+            </td>
+
+            <td>
+              <%= entity.entity_type.name %>
+            </td>
+
+            <td>
+              <% entity.entity_role_assignments.active.each do |assignment| %>
+                <span class="badge bg-info me-1">
+                  <%= assignment.entity_role.name %>
+                </span>
+              <% end %>
+            </td>
+
+            <td class="text-end">
+              <%= link_to "Ver",
+                    contact_path(entity),
+                    class: "btn btn-sm btn-outline-secondary" %>
+            </td>
+          </tr>
+        <% end %>
+
+        <% if @entities.empty? %>
+          <tr>
+            <td colspan="4" class="text-center text-muted py-4">
+              No se han encontrado contactos.
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

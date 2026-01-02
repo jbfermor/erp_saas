@@ -3,8 +3,8 @@ module Core
 
     self.table_name = "core_company_plans"
 
-    belongs_to :company, class_name: "Core::Company", foreign_key: "company_id"
-    belongs_to :plan, class_name: "MasterData::Plan", foreign_key: "plan_id"
+    belongs_to :company, class_name: "Core::Company", foreign_key: "company_id", dependent: :destroy
+    belongs_to :plan, class_name: "MasterData::Plan", foreign_key: "plan_id", dependent: :destroy
     
     validates :active, presence: true
 

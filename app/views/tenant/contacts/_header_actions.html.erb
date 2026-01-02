@@ -1,0 +1,76 @@
+<!-- app/views/tenant/contacts/_header_actions.html.erb -->
+
+<div class="mb-4">
+  
+  <%# Título %>
+  <div class="mb-3"> 
+    <h1 class="h2">
+      <i class="bi bi-people-fill text-primary"></i>
+      Contactos
+    </h1>
+    <small class="text-muted">Gestiona clientes, proveedores y empleados</small>
+  </div>
+
+  <%# Acciones %>
+  <div class="btn-group" role="group">
+    
+    <%# Botón principal: Nuevo Contacto %>
+    <%= link_to new_contact_path, 
+                class: "btn btn-primary" do %>
+      <i class="bi bi-plus-circle"></i>
+      Nuevo Contacto
+    <% end %>
+    <%# Dropdown: Configuración %>
+    <div class="btn-group" role="group">
+      <button type="button" 
+              class="btn btn-outline-secondary dropdown-toggle" 
+              data-bs-toggle="dropdown" 
+              aria-expanded="false">
+        <i class="bi bi-gear"></i>
+        Configuración
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow p-2">
+        <li>
+          <h6 class="dropdown-header">
+            <i class="bi bi-sliders"></i> Personalización
+          </h6>
+        </li>
+        <li>
+            <i class="bi bi-tags"></i> Gestionar Roles de Entidad
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <h6 class="dropdown-header">
+            <i class="bi bi-download"></i> Exportar
+          </h6>
+        </li>
+        <li>
+          <a class="dropdown-item" href="#" onclick="alert('Funcionalidad en desarrollo')">
+            <i class="bi bi-file-earmark-excel"></i>
+            Exportar a Excel
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="#" onclick="alert('Funcionalidad en desarrollo')">
+            <i class="bi bi-file-earmark-pdf"></i>
+            Exportar a PDF
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <h6 class="dropdown-header">
+            <i class="bi bi-upload"></i> Importar
+          </h6>
+        </li>
+        <li>
+          <a class="dropdown-item" href="#" onclick="alert('Funcionalidad en desarrollo')">
+            <i class="bi bi-file-earmark-arrow-up"></i>
+            Importar desde Excel
+          </a>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>

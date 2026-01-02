@@ -1,15 +1,16 @@
 <h1 class="mb-4">Panel de <%= Core::Company.find(current_tenant_user.company.id).name %></h1>
 
 <div class="row">
-  <div class="col-md-4">
+  <div class="col">
     <div class="card shadow-sm">
       <div class="card-body">
         <h5 class="card-title text-center">
-          <%= link_to "Contactos", products_path %>
+          <%= link_to "Contactos", contacts_path %>
         </h5>
       </div>
     </div>
-  <div class="col-md-4">
+  </div>
+  <div class="col">
     <div class="card shadow-sm">
       <div class="card-body">
         <h5 class="card-title text-center">
@@ -18,8 +19,7 @@
       </div>
     </div>
   </div>
-
-    <div class="col-md-4">
+  <div class="col">
     <div class="card shadow-sm">
       <div class="card-body">
         <h5 class="card-title text-center">

@@ -110,10 +110,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_30_142223) do
   create_table "contact_entity_role_assignments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "entity_id", null: false
     t.uuid "entity_role_id", null: false
+    t.uuid "state_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["entity_id"], name: "index_contact_entity_role_assignments_on_entity_id"
     t.index ["entity_role_id"], name: "index_contact_entity_role_assignments_on_entity_role_id"
+    t.index ["state_id"], name: "index_contact_entity_role_assignments_on_state_id"
   end
 
   create_table "contact_entity_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -240,6 +242,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_30_142223) do
     t.index ["slug"], name: "index_master_data_document_types_on_slug", unique: true
   end
 
+  create_table "master_data_entity_role_assignment_states", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "slug"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "master_data_entity_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "slug", null: false
@@ -349,6 +358,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_30_142223) do
   add_foreign_key "contact_business_infos", "core_entities", column: "entity_id"
   add_foreign_key "contact_entity_role_assignments", "contact_entity_roles", column: "entity_role_id"
   add_foreign_key "contact_entity_role_assignments", "core_entities", column: "entity_id"
+  add_foreign_key "contact_entity_role_assignments", "master_data_entity_role_assignment_states", column: "state_id"
   add_foreign_key "contact_personal_infos", "core_entities", column: "entity_id"
   add_foreign_key "contact_personal_infos", "master_data_document_types", column: "document_type_id"
   add_foreign_key "core_company_plans", "core_companies", column: "company_id"

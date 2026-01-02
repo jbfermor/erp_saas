@@ -41,6 +41,7 @@ Rails.application.routes.draw do
     scope module: :tenant do
       root to: "dashboard#index", as: :tenant_root
       resources :users
+      resources :contacts
       get 'company_configuration', to: 'company_configuration#index', as: 'company_configuration'
       resources :entities do
         scope module: :contact do
@@ -48,6 +49,10 @@ Rails.application.routes.draw do
           resource :bank_infos, only: [:new, :create, :edit, :update, :destroy]
           resource :address, controller: 'entity_addresses', only: [:new, :create, :edit, :update, :destroy]
         end
+      end
+
+      namespace :settings do
+        resources :entity_roles, except: [:show]
       end
     end
   end
